@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_library(osu-cheese-framework STATIC
 	"sed/windows/smart_handle.hpp"
 	"sed/windows/smart_handle.cpp"
+	"sed/windows/suspend_guard.hpp"
+	"sed/windows/suspend_guard.cpp"
 )
 
 set_target_properties(osu-cheese-framework PROPERTIES LINKER_LANGUAGE CXX)

@@ -10,6 +10,8 @@ sed::smart_handle::~smart_handle()
 {
 	if (this->hnd)
 		CloseHandle(this->hnd);
+
+	this->hnd = nullptr;
 }
 
 sed::smart_handle::smart_handle(smart_handle && other)
