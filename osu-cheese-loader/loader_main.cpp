@@ -103,6 +103,9 @@ static auto find_osu_auth_thread(info_t & proc, sed::suspend_guard & out, std::u
 	return false;
 }
 
+#define OSUCHEESE_WAIT_FOR_QUERY(fn, ...) \
+	while (!fn(__VA_ARGS__)) Sleep(800)
+
 // TODO: clean up, merge checks as one iteration
 auto main(int argc, char ** argv) -> int
 {
@@ -138,21 +141,18 @@ auto main(int argc, char ** argv) -> int
 	// Process query
 	info_t osu_proc {};
 	printf("\n[+] Attaching to osu...");
-	while (!find_osu_proc(osu_proc))
-		Sleep(800);
+	OSUCHEESE_WAIT_FOR_QUERY(find_osu_proc, osu_proc);
 
 	// Module query
 	printf("\n[+] Looking for osu!auth...");
 	std::uintptr_t start, end;
-	while (!find_osu_auth(osu_proc, start, end))
-		Sleep(800);
+	OSUCHEESE_WAIT_FOR_QUERY(find_osu_auth, osu_proc, start, end);
 	printf(" 0x%p - 0x%p", reinterpret_cast<void *>(start), reinterpret_cast<void *>(end));
 
 	// Thread query
 	printf("\n[+] Enumerating for osu auth thread...");
 	sed::suspend_guard auth_thread;
-	while (!find_osu_auth_thread(osu_proc, auth_thread, start, end))
-		Sleep(800);
+	OSUCHEESE_WAIT_FOR_QUERY(find_osu_auth_thread, osu_proc, auth_thread, start, end);
 
 	printf("\n[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
 	std::cin.get();
