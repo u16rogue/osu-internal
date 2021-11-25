@@ -23,7 +23,7 @@ sed::suspend_guard::suspend_guard(DWORD id_)
 sed::suspend_guard::~suspend_guard()
 {
 	if (this->thread_handle)
-		while (ResumeThread(this->thread_handle) == 0);
+		ResumeThread(this->thread_handle);
 
 	this->id = 0;
 	this->thread_handle = nullptr;
@@ -31,20 +31,13 @@ sed::suspend_guard::~suspend_guard()
 
 sed::suspend_guard::suspend_guard(suspend_guard && other)
 {
-	if (this->thread_handle)
-		while (ResumeThread(this->thread_handle) == 0);
-
-	this->id = other.id;
-	this->thread_handle = std::move(other.thread_handle);
-
-	other.id = 0;
-	other.thread_handle = nullptr;
+	*this = std::move(other);
 }
 
 sed::suspend_guard & sed::suspend_guard::operator=(suspend_guard && rhs)
 {
 	if (this->thread_handle)
-		while (ResumeThread(this->thread_handle) == 0);
+		ResumeThread(this->thread_handle);
 
 	this->id = rhs.id;
 	this->thread_handle = std::move(rhs.thread_handle);

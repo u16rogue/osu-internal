@@ -1,5 +1,7 @@
 #include "smart_handle.hpp"
 
+#include <utility>
+
 sed::smart_handle::smart_handle()
 	: hnd(nullptr) {}
 
@@ -16,11 +18,7 @@ sed::smart_handle::~smart_handle()
 
 sed::smart_handle::smart_handle(smart_handle && other)
 {
-	if (this->hnd)
-		CloseHandle(this->hnd);
-
-	this->hnd = other.hnd;
-	other.hnd = nullptr;
+	*this = std::move(other);
 }
 
 sed::smart_handle & sed::smart_handle::operator =(sed::smart_handle && rhs)
