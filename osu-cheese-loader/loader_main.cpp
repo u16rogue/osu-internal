@@ -18,15 +18,15 @@
 
 using info_t = std::pair<sed::smart_handle, DWORD>;
 
-decltype(NtQueryInformationThread) * _ntquerythread = nullptr;
+decltype(NtQueryInformationThread) * _NtQueryInformationThread = nullptr;
 
-static auto find_osu_proc() -> info_t
+static auto find_osu_proc(info_t & out) -> bool
 {
 	sed::smart_handle proc_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 	if (!proc_snap)
 	{
 		printf("Failed.");
-		return std::make_pair(nullptr, 0);
+		return false;
 	}
 	
 	PROCESSENTRY32W pe { .dwSize = sizeof(pe) };
@@ -37,12 +37,13 @@ static auto find_osu_proc() -> info_t
 			if (wcscmp(pe.szExeFile, L"osu!.exe"))
 				continue;
 
-			return std::make_pair(sed::smart_handle(OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID)), pe.th32ProcessID);
+			out = std::make_pair(sed::smart_handle(OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID)), pe.th32ProcessID);
+			return true;
 
 		} while (Process32NextW(proc_snap, &pe));
 	}
 
-	return std::make_pair(nullptr, 0);
+	return false;
 }
 
 static auto find_osu_auth(info_t & proc, std::uintptr_t & start, std::uintptr_t & end) -> bool
@@ -68,11 +69,11 @@ static auto find_osu_auth(info_t & proc, std::uintptr_t & start, std::uintptr_t 
 	return false;
 }
 
-static auto find_osu_auth_thread(info_t & proc, std::uintptr_t start, std::uintptr_t end) -> sed::suspend_guard
+static auto find_osu_auth_thread(info_t & proc, sed::suspend_guard & out, std::uintptr_t start, std::uintptr_t end) -> bool
 {
 	sed::smart_handle thread_snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, NULL);
 	if (!thread_snap)
-		return 0;
+		return false;
 
 	THREADENTRY32 te { .dwSize = sizeof(te) };
 	if (Thread32First(thread_snap, &te))
@@ -88,15 +89,18 @@ static auto find_osu_auth_thread(info_t & proc, std::uintptr_t start, std::uintp
 
 			DWORD staddr { 0 };
 			// https://www.geoffchappell.com/studies/windows/km/ntoskrnl/api/ps/psquery/class.htm
-			_ntquerythread(tt, THREADINFOCLASS(0x09), &staddr, sizeof(staddr), nullptr);
+			_NtQueryInformationThread(tt, THREADINFOCLASS(0x09), &staddr, sizeof(staddr), nullptr);
 
 			if (staddr >= start && staddr <= end)
-				return std::move(tt);
+			{
+				out = std::move(tt);
+				return true;
+			}
 
 		} while (Thread32Next(thread_snap, &te));
 	}
 
-	return 0;
+	return false;
 }
 
 // TODO: clean up, merge checks as one iteration
@@ -123,18 +127,18 @@ auto main(int argc, char ** argv) -> int
 
 	// NtQueryInformationThread import
 	printf("\n[+] Importing NtQueryInformationThread... ");
-	_ntquerythread = reinterpret_cast<decltype(_ntquerythread)>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationThread"));
-	if (!_ntquerythread)
+	_NtQueryInformationThread = reinterpret_cast<decltype(_NtQueryInformationThread)>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationThread"));
+	if (!_NtQueryInformationThread)
 	{
 		printf("Failed!");
 		return 1;
 	}
-	printf("0x%p", _ntquerythread);
+	printf("0x%p", _NtQueryInformationThread);
 
 	// Process query
 	info_t osu_proc {};
 	printf("\n[+] Attaching to osu...");
-	while (!(osu_proc = find_osu_proc()).first)
+	while (!find_osu_proc(osu_proc))
 		Sleep(800);
 
 	// Module query
@@ -147,10 +151,10 @@ auto main(int argc, char ** argv) -> int
 	// Thread query
 	printf("\n[+] Enumerating for osu auth thread...");
 	sed::suspend_guard auth_thread;
-	while (!(auth_thread = find_osu_auth_thread(osu_proc, start, end)))
+	while (!find_osu_auth_thread(osu_proc, auth_thread, start, end))
 		Sleep(800);
 
-	printf("[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
+	printf("\n[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
 	std::cin.get();
 
 
