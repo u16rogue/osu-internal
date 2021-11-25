@@ -22,5 +22,7 @@ packages/
 /.docs/
 /docs/
 
+/osu-cheese-loader/client_path.hpp
+
 CMakeSettings.json
 notes.txt

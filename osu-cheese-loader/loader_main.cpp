@@ -5,9 +5,16 @@
 #include <tuple>
 #include <Psapi.h>
 #include <winternl.h>
+#include <filesystem>
 #include <iostream>
 #include <sed/windows/smart_handle.hpp>
 #include <sed/windows/suspend_guard.hpp>
+
+#if __has_include("client_path.hpp")
+	#include "client_path.hpp"
+#else
+	#define DEBUG_HARDCODE_CLIENT_PATH L""
+#endif
 
 using info_t = std::pair<sed::smart_handle, DWORD>;
 
@@ -93,9 +100,29 @@ static auto find_osu_auth_thread(info_t & proc, std::uintptr_t start, std::uintp
 }
 
 // TODO: clean up, merge checks as one iteration
-auto main() -> int
+auto main(int argc, char ** argv) -> int
 {
-	printf("[+] Importing NtQueryInformationThread... ");
+	const char * client_path = nullptr;
+
+	if (argc < 2)
+	{
+		if (!DEBUG_HARDCODE_CLIENT_PATH[0])
+		{
+			printf("[!] ERROR: Missing path for client!");
+			return 1;
+		}
+		
+		client_path = DEBUG_HARDCODE_CLIENT_PATH;
+	}
+	else
+	{
+		client_path = argv[1];
+	}
+
+	printf("\n[+] Client path: %s", client_path);
+
+	// NtQueryInformationThread import
+	printf("\n[+] Importing NtQueryInformationThread... ");
 	_ntquerythread = reinterpret_cast<decltype(_ntquerythread)>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationThread"));
 	if (!_ntquerythread)
 	{
@@ -104,17 +131,20 @@ auto main() -> int
 	}
 	printf("0x%p", _ntquerythread);
 
+	// Process query
 	info_t osu_proc {};
 	printf("\n[+] Attaching to osu...");
 	while (!(osu_proc = find_osu_proc()).first)
 		Sleep(800);
 
+	// Module query
 	printf("\n[+] Looking for osu!auth...");
 	std::uintptr_t start, end;
 	while (!find_osu_auth(osu_proc, start, end))
 		Sleep(800);
 	printf(" 0x%p - 0x%p", reinterpret_cast<void *>(start), reinterpret_cast<void *>(end));
 
+	// Thread query
 	printf("\n[+] Enumerating for osu auth thread...");
 	sed::suspend_guard auth_thread;
 	while (!(auth_thread = find_osu_auth_thread(osu_proc, start, end)))
@@ -122,6 +152,7 @@ auto main() -> int
 
 	printf("[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
 	std::cin.get();
+
 
 
 	return 0;
