@@ -21,6 +21,17 @@ sed::smart_handle::smart_handle(smart_handle && other)
 	other.hnd = nullptr;
 }
 
+sed::smart_handle & sed::smart_handle::operator =(sed::smart_handle && rhs)
+{
+	if (this->hnd)
+		CloseHandle(this->hnd);
+
+	this->hnd = rhs.hnd;
+	rhs.hnd = nullptr;
+
+	return *this;
+}
+
 sed::smart_handle::operator HANDLE() const noexcept
 {
 	return this->hnd;

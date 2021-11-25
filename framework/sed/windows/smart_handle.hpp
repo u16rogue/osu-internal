@@ -14,7 +14,9 @@ namespace sed
 		smart_handle();
 		smart_handle(HANDLE hnd_);
 		~smart_handle();
+		
 		smart_handle(smart_handle && other);
+		smart_handle & operator =(smart_handle && rhs);
 
 		operator HANDLE() const noexcept;
 		operator bool() const noexcept;
