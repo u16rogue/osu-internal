@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.18)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+add_library(osu-cheese-framework STATIC
+	"sed/windows/smart_handle.hpp"
+	"sed/windows/smart_handle.cpp"
+)
+
+set_target_properties(osu-cheese-framework PROPERTIES LINKER_LANGUAGE CXX)
+set(osu-cheese-framework-includes "${CMAKE_CURRENT_SOURCE_DIR}" PARENT_SCOPE)
