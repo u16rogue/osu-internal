@@ -8,6 +8,9 @@ add_library(osu-cheese-framework STATIC
 	"sed/windows/smart_handle.cpp"
 	"sed/windows/suspend_guard.hpp"
 	"sed/windows/suspend_guard.cpp"
+
+	"sed/console.hpp"
+	"sed/console.cpp"
 )
 
 set_target_properties(osu-cheese-framework PROPERTIES LINKER_LANGUAGE CXX)

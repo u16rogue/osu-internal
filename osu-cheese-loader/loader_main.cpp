@@ -113,13 +113,15 @@ auto main(int argc, char ** argv) -> int
 
 	if (argc < 2)
 	{
-		if (!DEBUG_HARDCODE_CLIENT_PATH[0])
+		if constexpr (!DEBUG_HARDCODE_CLIENT_PATH[0])
 		{
 			printf("[!] ERROR: Missing path for client!");
 			return 1;
 		}
-		
-		client_path = DEBUG_HARDCODE_CLIENT_PATH;
+		else
+		{
+			client_path = DEBUG_HARDCODE_CLIENT_PATH;
+		}
 	}
 	else
 	{
@@ -156,8 +158,6 @@ auto main(int argc, char ** argv) -> int
 
 	printf("\n[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
 	std::cin.get();
-
-
-
+	
 	return 0;
 }
