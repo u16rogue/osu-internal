@@ -11,6 +11,8 @@ add_library(osu-cheese-framework STATIC
 
 	"sed/console.hpp"
 	"sed/console.cpp"
+	"sed/memory.hpp"
+	"sed/memory.cpp"
 )
 
 set_target_properties(osu-cheese-framework PROPERTIES LINKER_LANGUAGE CXX)

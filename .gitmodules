@@ -1,4 +1,0 @@
-[submodule "dependencies/minhook"]
-	shallow = true
-	path = dependencies/minhook
-	url = https://github.com/TsudaKageyu/minhook.git
