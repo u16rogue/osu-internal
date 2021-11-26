@@ -5,33 +5,46 @@
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
 
-static auto CALLBACK CallWindowProc_hk(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> void
+static auto CALLBACK CallWindowProc_hk(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
 	if (Msg == WM_LBUTTONDOWN)
 	{
 		printf("\n[D] Click -> [%d, %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 	}
+
+	return true;
 }
 
 void * CallWindowProc_target = CallWindowProcW;
 
-// osu! detects hooks by checking the return address, this little trampoline prevents that.
 static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
-	__asm
-	{
+	__asm__
+	(R"(
+		.intel_syntax noprefix
 		push ebp
 		mov ebp, esp
 		push [ebp+24]
 		push [ebp+20]
 		push [ebp+16]
 		push [ebp+12]
-		push [ebp+8] // forgot the return lol
+		push [ebp+8]
+	)");
+
+	// TODO: figure out how to do this in clang
+	__asm
+	{
 		call CallWindowProc_hk
 		mov eax, CallWindowProc_target
+	}
+
+	__asm__
+	(R"(
+		.intel_syntax noprefix
 		lea eax, [eax + 5]
 		jmp eax
-	}
+	)");
+
 }
 
 static auto CallWindowProc_install() -> bool
