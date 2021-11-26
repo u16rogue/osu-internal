@@ -18,7 +18,7 @@ static auto CALLBACK hk_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 auto hooks::install() -> bool
 {
 	printf("\n[+] Installing hooks...");
-
+	
 	// TODO: Use the game's window handle instead of grabbing it from FindWindow
 	printf("\n[+] Obtaining window handle... ");
 	HWND gamewnd = FindWindowW(L"WindowsForms10.Window.2b.app.0.1a0e24_r30_ad1", L"osu!");
