@@ -4,6 +4,8 @@
 #include <windowsx.h>
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
+#include <gl/GL.h>
+#include <gl/GLU.h>
 
 #include "game.hpp"
 
@@ -15,7 +17,7 @@ enum class CallWindowProc_variant : int
 	KEY   = W
 };
 
-static auto CALLBACK CallWindowProc_hk(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
+static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
 	static bool hold = false;
 
@@ -31,11 +33,7 @@ static auto CALLBACK CallWindowProc_hk(CallWindowProc_variant variant, HWND hWnd
 	return hold;
 }
 
-// TODO: load CallWindowProcA_target from LDR
-static void * CallWindowProcW_target = CallWindowProcW;
-static void * CallWindowProcA_target = CallWindowProcA;
-
-static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
+static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm__(
 	".intel_syntax noprefix \n"
@@ -51,7 +49,7 @@ static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFu
 
 	// TODO: figure out how to do this in clang
 	// Call hook function and check return
-	__asm call CallWindowProc_hk;
+	__asm call CallWindowProc_hook;
 	__asm__(
 	".intel_syntax noprefix   \n"
 	"	test al, al           \n"
@@ -84,21 +82,21 @@ static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFu
 	);
 }
 
-static auto __attribute__((naked)) CallWindowProcW_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
+static auto __attribute__((naked)) CallWindowProcW_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm
 	{
 		mov eax, 1
-		jmp CallWindowProc_trampoline
+		jmp CallWindowProc_proxy
 	};
 }
 
-static auto __attribute__((naked)) CallWindowProcA_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
+static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm
 	{
 		xor eax, eax
-		jmp CallWindowProc_trampoline
+		jmp CallWindowProc_proxy
 	};
 }
 
@@ -106,12 +104,14 @@ auto hooks::install() -> bool
 {
 	printf("\n[+] Installing hooks...");
 	
-	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_trampoline)
-	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_trampoline)
+	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
+	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	) {
 		printf("\n[!] Failed to install hooks!");
 		return false;
 	}
+	
+	
 
 	return true;
 }

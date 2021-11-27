@@ -157,7 +157,6 @@ auto main(int argc, char ** argv) -> int
 	OSUCHEESE_WAIT_FOR_QUERY(find_osu_auth_thread, osu_proc, auth_thread, start, end);
 
 	printf("\n[+] Suspended auth thread... 0x%p - ID: %lu", static_cast<HANDLE>(auth_thread), auth_thread.get_id());
-	std::cin.get();
 	
 	return 0;
 }
