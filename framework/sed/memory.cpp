@@ -1,11 +1,13 @@
 #include "memory.hpp"
 
+#include <iostream>
+
 auto sed::abs2rel32(void * from, std::size_t size, void * to) -> std::int32_t
 {
 	return static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(to) - (reinterpret_cast<std::uintptr_t>(from) + size));
 }
 
-auto rel2abs32(void * instruction, std::size_t size) -> std::uintptr_t
+auto sed::rel2abs32(void * instruction, std::size_t size) -> std::uintptr_t
 {
 	std::uintptr_t next = reinterpret_cast<std::uintptr_t>(instruction) + size;
 	return next + *reinterpret_cast<std::int32_t *>(next - sizeof(std::int32_t));

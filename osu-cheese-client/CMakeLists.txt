@@ -8,9 +8,11 @@ add_library(osu-cheese-client SHARED
 	"client_main.hpp"
 	"hooks.hpp"
 	"hooks.cpp"
-
 	"sdk/info_struct.hpp"
- "sdk/info_player.hpp")
+	"sdk/info_player.hpp"
+	"game.hpp"
+	"game.cpp"
+)
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
 

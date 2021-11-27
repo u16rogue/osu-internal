@@ -5,6 +5,7 @@
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
 
+#include "game.hpp"
 #include "hooks.hpp"
 
 auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
@@ -13,7 +14,7 @@ auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
 	{
 		sed::console::init();
 		printf("\n[+] Initializing...");
-		if (!hooks::install())
+		if (!game::initialize() || !hooks::install())
 		{
 			printf("\n[!] Initialization failed");
 			FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(inst), 0);
