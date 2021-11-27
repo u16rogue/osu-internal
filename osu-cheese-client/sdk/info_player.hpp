@@ -44,7 +44,7 @@ namespace sdk
 
 	private:
 		info_player_t ** pp_info_player    { nullptr };
-		info_player_t    info_player_dummy { 0       };
+		info_player_t    info_player_dummy {    0    };
 	};
 
 }

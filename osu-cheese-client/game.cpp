@@ -29,7 +29,7 @@ auto game::initialize() -> bool
 	printf("\n[+] Loading game information...");
 	sdk::info_player_t ** ppinfo { nullptr };
 	if (!pattern_scan_helper("game::p_game_info", game::p_game_info, "\xDB\x05\x00\x00\x00\x00\xD9\x5D\xF8", "xx????xxx", 0x6)
-	||  !pattern_scan_helper("game::pp_info_player", ppinfo, "\x8B\x15\x00\x00\x00\x00\x8B\x72", "xx????xx", 0x6)
+	||  !pattern_scan_helper("game::pp_info_player", ppinfo, /*"\x8B\x15\x00\x00\x00\x00\x8B\x72"*/ "\xFF\x50\x0C\x8B\xD8\x8B\x15", /*"xx????xx"*/ "xxxxxxx", 0xB) // TODO: find better sig
 	) {
 		return false;
 	}

@@ -63,12 +63,12 @@ static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFu
 
 	// Call A variant
 	__asm__("LBL_VARIANT_A:");
-	__asm mov eax, CallWindowProcA_target;
+	__asm lea eax, CallWindowProcA;
 	__asm__("jmp LBL_CALL_ORIGINAL");
 
 	// Call W variant
 	__asm__("LBL_VARIANT_W:");
-	__asm mov eax, CallWindowProcW_target;
+	__asm lea eax, CallWindowProcW;
 	__asm__("jmp LBL_CALL_ORIGINAL");
 
 	// Call original
