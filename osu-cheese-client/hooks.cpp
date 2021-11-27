@@ -102,42 +102,14 @@ static auto __attribute__((naked)) CallWindowProcA_trampoline(WNDPROC lpPrevWndF
 	)");
 }
 
-static auto CallWindowProc_install(void * target, void * tramp, char variant) -> bool
-{
-	std::uint8_t CallWindowProc_jmp_shellcode[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
-
-	printf("\n[+] Installing CallWindowProc%c", variant);
-
-	printf("\n[+] Changing CallWindowProc%c_target protection...", variant);
-	DWORD oprot { 0 };
-	if (!VirtualProtect(target, sizeof(CallWindowProc_jmp_shellcode), PAGE_EXECUTE_READWRITE, &oprot))
-		return false;
-
-	auto rel = sed::abs2rel32(target, sizeof(CallWindowProc_jmp_shellcode), tramp);
-	printf("\n[+] Calculating CWP%c_target -> CWP%c_trampoline relative address... ABS: 0x%p REL: 0x%p", variant, variant, tramp, rel);
-	*reinterpret_cast<std::uintptr_t*>(CallWindowProc_jmp_shellcode + 0x1) = rel;
-
-	printf("\n[+] Patching CallWindowProc%c_trampoline jump...", variant);
-	std::memcpy(target, CallWindowProc_jmp_shellcode, sizeof(CallWindowProc_jmp_shellcode));
-
-	printf("\n[+] Verifying patch...");
-	if (std::memcmp(target, CallWindowProc_jmp_shellcode, sizeof(CallWindowProc_jmp_shellcode)))
-		return false;
-
-	printf("\n[+] Restoring CallWindowProc%c_target protection...", variant);
-	if (!VirtualProtect(target, sizeof(CallWindowProc_jmp_shellcode), oprot, &oprot))
-		return false;
-
-	return true;
-}
-
 auto hooks::install() -> bool
 {
 	printf("\n[+] Installing hooks...");
-	
-	if (!CallWindowProc_install(CallWindowProcA, CallWindowProcA_trampoline, 'A')
-	||  !CallWindowProc_install(CallWindowProcW, CallWindowProcW_trampoline, 'W'))
-	{
+	;
+	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_trampoline)
+	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_trampoline)
+	) {
+		printf("\n[!] Failed to install hooks!");
 		return false;
 	}
 
