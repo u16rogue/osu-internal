@@ -25,7 +25,7 @@ static auto CALLBACK CallWindowProc_hk(CallWindowProc_variant variant, HWND hWnd
 	}
 	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
-		printf("\n[D] Click -> [X: %d, Y: %d, TIME: %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), game::p_game_info->beat_time);
+		printf("\n[D] Click -> [X: %d, Y: %d, TIME: %d, INGAME: %d, PLAYER: 0x%p]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player);
 	}
 
 	return hold;

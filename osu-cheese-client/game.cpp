@@ -27,12 +27,14 @@ static auto pattern_scan_helper(const char * name, T & out, const char * pattern
 auto game::initialize() -> bool
 {
 	printf("\n[+] Loading game information...");
-	
+	sdk::info_player_t ** ppinfo { nullptr };
 	if (!pattern_scan_helper("game::p_game_info", game::p_game_info, "\xDB\x05\x00\x00\x00\x00\xD9\x5D\xF8", "xx????xxx", 0x6)
-	||  !pattern_scan_helper("game::pp_info_player", game::pp_info_player, "\x8B\x15\x00\x00\x00\x00\x8B\x72", "xx????xx", 0x6)
+	||  !pattern_scan_helper("game::pp_info_player", ppinfo, "\x8B\x15\x00\x00\x00\x00\x8B\x72", "xx????xx", 0x6)
 	) {
 		return false;
 	}
+
+	game::pp_info_player = ppinfo;
 
 	return true;
 }

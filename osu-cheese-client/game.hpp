@@ -5,8 +5,8 @@
 
 namespace game
 {
-	inline sdk::info_player_t   ** pp_info_player { nullptr };
-	inline sdk::unk_game_info_a *  p_game_info    { nullptr };
+	inline sdk::ppinfo_player_t   pp_info_player;
+	inline sdk::unk_game_info_a * p_game_info { nullptr };
 
 	auto initialize() -> bool;
 }
