@@ -1,8 +1,5 @@
 #include "memory.hpp"
 
-#include <Windows.h>
-#include <Psapi.h>
-
 auto sed::abs2rel32(void * from, std::size_t size, void * to) -> std::int32_t
 {
 	return static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(to) - (reinterpret_cast<std::uintptr_t>(from) + size));
@@ -36,33 +33,46 @@ auto sed::pattern_scan(void * start_, std::size_t size, const char * pattern, co
 {
 	std::uint8_t * start = reinterpret_cast<decltype(start)>(start_);
 	const auto     len   = strlen(mask);
-	const auto   * end   = start + size - len;
-
-	for (auto current = start; current < end; ++current)
+	
+	for (std::size_t rva = 0; rva < size - len; ++rva)
 	{
-		for (int i = 0; i < len; ++i)
+		for (int pat_i = 0; pat_i < len; ++pat_i)
 		{
-			if (mask[i] == '?')
+			if (mask[pat_i] == '?')
 				continue;
 
-			if (mask[i] != 'x' || pattern[i] != current[i])
+			if (mask[pat_i] != 'x' || pattern[pat_i] != reinterpret_cast<const char *>(start)[rva + pat_i])
 				break;
 
-			if (i == len - 1)
-				return reinterpret_cast<std::uintptr_t>(current);
+			if (pat_i == len - 1)
+				return reinterpret_cast<std::uintptr_t>(start_) + rva;
 		}
 	}
 
 	return 0;
 }
 
-auto sed::pattern_scan(const wchar_t * modname, const char * pattern, const char * mask) -> std::uintptr_t
+auto sed::pattern_scan_exec_region(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t
 {
-	HMODULE    mod = GetModuleHandleW(modname);
-	MODULEINFO mi { 0 };
+	std::uint8_t * current = reinterpret_cast<decltype(current)>(start_);
+	std::uint8_t * end     = size == -1 ? reinterpret_cast<std::uint8_t *>(-1) : current + size;
 
-	if (!mod || !GetModuleInformation(GetCurrentProcess(), mod, &mi, sizeof(mi)))
-		return 0;
+	MEMORY_BASIC_INFORMATION mbi { 0 };
+	while (VirtualQuery(current, &mbi, sizeof(mbi)) && current < end)
+	{
+		constexpr DWORD any_execute = PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+		if (mbi.State != MEM_COMMIT || !(mbi.Protect & any_execute))
+		{
+			current += mbi.RegionSize;
+			continue;
+		}
 
-	return sed::pattern_scan(mi.lpBaseOfDll, mi.SizeOfImage, pattern, mask);
+		auto match = sed::pattern_scan(current, mbi.RegionSize, pattern, mask);
+		if (match)
+			return match;
+
+		current += mbi.RegionSize;
+	}
+
+	return 0;
 }

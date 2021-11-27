@@ -2,6 +2,10 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <vector>
+#include <Windows.h>
+#include <Psapi.h>
+#include <memory>
 
 namespace sed
 {
@@ -11,5 +15,5 @@ namespace sed
 
 	// TODO: consteval ida style pattern generator
 	auto pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
-	auto pattern_scan(const wchar_t * modname, const char * pattern, const char * mask) -> std::uintptr_t;
+	auto pattern_scan_exec_region(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
 }
