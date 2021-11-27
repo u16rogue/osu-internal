@@ -5,101 +5,99 @@
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
 
-static auto CALLBACK CallWindowProc_hk(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
+enum class CallWindowProc_variant : int
+{
+	A     = 0,
+	MOUSE = A,
+	W     = 1,
+	KEY   = W
+};
+
+static auto CALLBACK CallWindowProc_hk(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
 	static bool hold = false;
 
-	if (Msg == WM_KEYDOWN && wParam == VK_PAUSE)
+	if (variant == CallWindowProc_variant::KEY && Msg == WM_KEYDOWN)
 	{
-		printf("\n[D] toggle: %d", wParam);
-		hold = !hold;
-		return true;
+		printf("\n[D] Key -> 0x%x", wParam);
 	}
-
-	if (Msg == WM_LBUTTONDOWN)
+	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
-		printf("\n[D] Click -> [%d, %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		printf("\n[D] Click -> [%d, %d, %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), variant);
 	}
 
 	return hold;
 }
 
-// TODO: refactor and Find a way to Merge A and W tramps
+// TODO: load CallWindowProcA_target from LDR
+static void * CallWindowProcW_target = CallWindowProcW;
+static void * CallWindowProcA_target = CallWindowProcA;
 
-void * CallWindowProcW_target = CallWindowProcW; // TODO: load CallWindowProcW_target from LDR
-static auto __attribute__((naked)) CallWindowProcW_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
+static auto __attribute__((naked)) CallWindowProc_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		push ebp
-		mov ebp, esp
-		push [ebp+24]
-		push [ebp+20]
-		push [ebp+16]
-		push [ebp+12]
-		push [ebp+8]
-	)");
+	__asm__(
+	".intel_syntax noprefix \n"
+	"	push ebp	        \n"
+	"	mov ebp, esp        \n"
+	"	push eax            \n"
+	"	push [ebp+24]       \n"
+	"	push [ebp+20]       \n"
+	"	push [ebp+16]       \n"
+	"	push [ebp+12]       \n"
+	"	push eax	        \n"
+	);
 
 	// TODO: figure out how to do this in clang
+	// Call hook function and check return
 	__asm call CallWindowProc_hk;
+	__asm__(
+	".intel_syntax noprefix   \n"
+	"	test al, al           \n"
+	"	jnz LBL_SKIP_ORIGINAL \n"
+	"	pop eax               \n"
+	"   test al, al           \n"
+	"   jz LBL_VARIANT_W      \n"
+	);
 
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		test al, al
-		jz call_CallWindowProcW_target
-		pop ebp
-		ret 0x14
-		call_CallWindowProcW_target:
-	)");
+	// Call A variant
+	__asm__("LBL_VARIANT_A:");
+	__asm mov eax, CallWindowProcA_target;
+	__asm__("jmp LBL_CALL_ORIGINAL");
 
+	// Call W variant
+	__asm__("LBL_VARIANT_W:");
 	__asm mov eax, CallWindowProcW_target;
+	__asm__("jmp LBL_CALL_ORIGINAL");
 
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		lea eax, [eax + 5]
-		jmp eax
-	)");
+	// Call original
+	__asm__(
+	".intel_syntax noprefix \n"
+	"LBL_SKIP_ORIGINAL:     \n"
+	"   pop eax             \n"
+	"	pop ebp             \n"
+	"	ret 0x14            \n"
+	"LBL_CALL_ORIGINAL:     \n"
+	"	lea eax, [eax + 5]  \n"
+	"	jmp eax             \n"
+	);
 }
 
-void * CallWindowProcA_target = CallWindowProcA; // TODO: load CallWindowProcA_target from LDR
+static auto __attribute__((naked)) CallWindowProcW_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
+{
+	__asm
+	{
+		mov eax, 1
+		jmp CallWindowProc_trampoline
+	};
+}
+
 static auto __attribute__((naked)) CallWindowProcA_trampoline(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		push ebp
-		mov ebp, esp
-		push [ebp+24]
-		push [ebp+20]
-		push [ebp+16]
-		push [ebp+12]
-		push [ebp+8]
-	)");
-
-	// TODO: figure out how to do this in clang
-	__asm call CallWindowProc_hk;
-
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		test al, al
-		jz call_CallWindowProcA_target
-		pop ebp
-		ret 0x14
-		call_CallWindowProcA_target:
-	)");
-
-	__asm mov eax, CallWindowProcA_target;
-
-	__asm__
-	(R"(
-		.intel_syntax noprefix
-		lea eax, [eax + 5]
-		jmp eax
-	)");
+	__asm
+	{
+		xor eax, eax
+		jmp CallWindowProc_trampoline
+	};
 }
 
 auto hooks::install() -> bool
