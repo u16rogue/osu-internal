@@ -13,6 +13,11 @@ auto sed::rel2abs32(void * instruction, std::size_t size) -> std::uintptr_t
 	return next + *reinterpret_cast<std::int32_t *>(next - sizeof(std::int32_t));
 }
 
+auto sed::abs32(void * instruction, std::size_t size) -> std::uintptr_t
+{
+	return *reinterpret_cast<std::uintptr_t *>(reinterpret_cast<std::uintptr_t>(instruction) + size - sizeof(std::uintptr_t));
+}
+
 auto sed::jmprel32_apply(void * from, void * to) -> bool
 {
 	std::uint8_t shell[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };

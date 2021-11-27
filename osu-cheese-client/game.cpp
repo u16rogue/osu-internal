@@ -4,7 +4,7 @@
 #include <sed/memory.hpp>
 
 template <typename T>
-static auto pattern_scan_helper(const char * name, T & out, const char * pattern, const char * mask, int rel32sz = 0) -> bool
+static auto pattern_scan_helper(const char * name, T & out, const char * pattern, const char * mask, int sz32 = 0, bool is_abs = true) -> bool
 {
 	printf("\n[+] Searching for %s...", name);
 	auto res = sed::pattern_scan_exec_region(nullptr, -1, pattern, mask);
@@ -15,9 +15,9 @@ static auto pattern_scan_helper(const char * name, T & out, const char * pattern
 
 	out = reinterpret_cast<T>(res);
 
-	if (rel32sz)
+	if (sz32)
 	{
-		out = reinterpret_cast<T>(sed::rel2abs32(static_cast<T>(out), rel32sz));
+		out = reinterpret_cast<T>(is_abs ? sed::abs32(out, sz32) : sed::rel2abs32(out, sz32));
 		printf(" -> 0x%p", out);
 	}
 	

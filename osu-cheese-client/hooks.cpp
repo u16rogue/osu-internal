@@ -5,6 +5,8 @@
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
 
+#include "game.hpp"
+
 enum class CallWindowProc_variant : int
 {
 	A     = 0,
@@ -23,7 +25,7 @@ static auto CALLBACK CallWindowProc_hk(CallWindowProc_variant variant, HWND hWnd
 	}
 	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
-		printf("\n[D] Click -> [%d, %d, %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), variant);
+		printf("\n[D] Click -> [X: %d, Y: %d, TIME: %d]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), game::p_game_info->beat_time);
 	}
 
 	return hold;
