@@ -8,7 +8,7 @@ static auto pattern_scan_helper(const char * name, T & out, const char * pattern
 {
 	printf("\n[+] Searching for %s...", name);
 	auto res = sed::pattern_scan_exec_region(nullptr, -1, pattern, mask);
-	printf("0x%p", res);
+	printf(" 0x%p", res);
 
 	if (!res)
 		return false;
