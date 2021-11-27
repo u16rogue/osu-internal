@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Libraries
 add_subdirectory("framework")
+add_subdirectory("dependencies/imgui")
 
 # Projects
 option(BUILD_CLIENT "Build's the client library (DLL)." ON)
