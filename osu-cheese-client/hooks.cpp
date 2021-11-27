@@ -103,7 +103,7 @@ static auto __attribute__((naked)) CallWindowProcA_trampoline(WNDPROC lpPrevWndF
 auto hooks::install() -> bool
 {
 	printf("\n[+] Installing hooks...");
-	;
+	
 	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_trampoline)
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_trampoline)
 	) {
