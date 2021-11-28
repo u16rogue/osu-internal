@@ -6,8 +6,8 @@
 #include <sed/memory.hpp>
 #include <gl/GL.h>
 #include <gl/GLU.h>
-
 #include "game.hpp"
+#include "sdk/osu_pixel.hpp"
 
 enum class CallWindowProc_variant : int
 {
@@ -19,13 +19,33 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
+	static int reso_mode = 0;
+	static int resos[][2] =
+	{
+		{ 800,  600 },
+		{ 1024, 768 },
+		{ 1024, 600 },
+		{ 1280, 720 },
+		{ 1280, 768 },
+		{ 1360, 768 },
+		{ 1600, 900 }
+	};
+
 	if (variant == CallWindowProc_variant::KEY && Msg == WM_KEYDOWN)
 	{
 		printf("\n[D] Key -> 0x%x", wParam);
+		switch (wParam)
+		{
+			case VK_HOME:
+				reso_mode = (reso_mode + 1) % (sizeof(resos) / sizeof(resos[0]));
+				printf("\n[D] Force change resolution mode to: %d x %d", resos[reso_mode][0], resos[reso_mode][1]);
+				break;
+		};
 	}
 	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
-		printf("\n[D] Click -> [X: %d, Y: %d, TIME: %d, INGAME: %d, PLAYER: 0x%p]", GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player);
+		auto osupx = sdk::screen2osupixel(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), resos[reso_mode][0], resos[reso_mode][1]);
+		printf("\n[D] Click -> [X: %d (%d), Y: %d (%d), TIME: %d, INGAME: %d, PLAYER: 0x%p]", GET_X_LPARAM(lParam), osupx.x, GET_Y_LPARAM(lParam), osupx.y, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player);
 	}
 
 	return false;
@@ -97,14 +117,14 @@ static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, 
 	};
 }
 
-static auto WINAPI gdi32full_SwapBuffers_hook(HDC idk) -> void
+static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 {
-	
+
 }
 
 static decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
 
-static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC idk) -> BOOL
+static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 {
 	__asm
 	{

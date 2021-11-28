@@ -8,18 +8,26 @@ add_library(osu-cheese-client SHARED
 	"client_main.hpp"
 	"hooks.hpp"
 	"hooks.cpp"
-	"sdk/info_struct.hpp"
-	"sdk/info_player.hpp"
 	"game.hpp"
 	"game.cpp"
+
+	"sdk/info_struct.hpp"
+	"sdk/info_player.hpp"
+	"sdk/osu_pixel.hpp"
+	"sdk/osu_pixel.cpp"
+	"sdk/osu_vec.hpp"
+	
+	
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries(osu-cheese-client PRIVATE
 	osu-cheese-framework
+	imgui
 )
 
 target_include_directories(osu-cheese-client PRIVATE
 	${osu-cheese-framework-includes}
+	${imgui-includes}
 )
