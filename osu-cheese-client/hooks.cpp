@@ -9,6 +9,8 @@
 #include "game.hpp"
 #include "sdk/gamefield.hpp"
 
+// TODO: BUG! proxy hook for CWP A causing characters to get corrupted
+
 enum class CallWindowProc_variant : int
 {
 	A     = 0,
@@ -46,9 +48,9 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
 		auto [px, py] = sdk::game_field::s2f(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		printf("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p]", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player);
+		printf("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
 	}
-
+	
 	return false;
 }
 
@@ -75,17 +77,17 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 	"	jnz LBL_SKIP_ORIGINAL \n"
 	"	pop eax               \n"
 	"   test al, al           \n"
-	"   jz LBL_VARIANT_W      \n"
+	"   jz LBL_VARIANT_A      \n"
 	);
-
-	// Call A variant
-	__asm__("LBL_VARIANT_A:");
-	__asm lea eax, [CallWindowProcA + 5];
-	__asm__("jmp LBL_CALL_ORIGINAL");
 
 	// Call W variant
 	__asm__("LBL_VARIANT_W:");
-	__asm lea eax, [CallWindowProcW + 5];
+	__asm lea eax, [CallWindowProcW + 5]
+	__asm__("jmp LBL_CALL_ORIGINAL");
+
+	// Call A variant
+	__asm__("LBL_VARIANT_A:");
+	__asm lea eax, [CallWindowProcA + 5]
 	__asm__("jmp LBL_CALL_ORIGINAL");
 
 	// Call original
@@ -96,6 +98,7 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 	"	pop ebp             \n"
 	"	ret 0x14            \n"
 	"LBL_CALL_ORIGINAL:     \n"
+	// "	lea eax, [eax+5]    \n"
 	"	jmp eax             \n"
 	);
 }
@@ -109,6 +112,7 @@ static auto __attribute__((naked)) CallWindowProcW_proxy(WNDPROC lpPrevWndFunc, 
 	};
 }
 
+void * sgfsdgfsdg = CallWindowProcA;
 static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm
@@ -124,7 +128,6 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 }
 
 static decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
-
 static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 {
 	__asm
@@ -136,6 +139,29 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 		call gdi32full_SwapBuffers_hook
 
 		mov eax, gdi32full_SwapBuffers_target
+		lea eax, [eax + 5]
+		jmp eax
+	}
+}
+
+static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
+{
+	wprintf(L"\n[D] Set [0x%p] -> %s", hWnd, lpString);
+}
+
+static decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
+static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpString) -> BOOL
+{
+	__asm
+	{
+		push ebp
+		mov ebp, esp
+
+		push [ebp+12]
+		push [ebp+8]
+		call SetWindowTextW_hook
+		
+		mov eax, SetWindowTextW_target // we cant do load effective address because clang (msvc?) does some funny things like using the ecx register causing the ctx to get corrupted
 		lea eax, [eax + 5]
 		jmp eax
 	}
@@ -156,6 +182,7 @@ auto hooks::install() -> bool
 
 	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
+	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	) {
 		printf("\n[!] Failed to install hooks!");

@@ -19,7 +19,7 @@ auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
 			printf("\n[!] Initialization failed");
 			FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(inst), 0);
 		}
-		
+
 		return 0;
 	}, inst, NULL, nullptr));
 
