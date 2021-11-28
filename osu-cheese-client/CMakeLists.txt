@@ -10,14 +10,11 @@ add_library(osu-cheese-client SHARED
 	"hooks.cpp"
 	"game.hpp"
 	"game.cpp"
-
 	"sdk/info_struct.hpp"
 	"sdk/info_player.hpp"
-	"sdk/osu_pixel.hpp"
-	"sdk/osu_pixel.cpp"
 	"sdk/osu_vec.hpp"
-	
-	
+	"sdk/gamefield.hpp"
+	"sdk/gamefield.cpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
