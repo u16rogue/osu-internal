@@ -96,6 +96,7 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 	"LBL_SKIP_ORIGINAL:     \n"
 	"   pop eax             \n"
 	"	pop ebp             \n"
+	"   mov eax, 1          \n"
 	"	ret 0x14            \n"
 	"LBL_CALL_ORIGINAL:     \n"
 	// "	lea eax, [eax+5]    \n"
@@ -112,7 +113,6 @@ static auto __attribute__((naked)) CallWindowProcW_proxy(WNDPROC lpPrevWndFunc, 
 	};
 }
 
-void * sgfsdgfsdg = CallWindowProcA;
 static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm
@@ -127,7 +127,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 
 }
 
-static decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
+static volatile decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
 static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 {
 	__asm
@@ -149,7 +149,7 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	wprintf(L"\n[D] Set [0x%p] -> %s", hWnd, lpString);
 }
 
-static decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
+static volatile decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
 static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpString) -> BOOL
 {
 	__asm

@@ -20,6 +20,8 @@ auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
 			FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(inst), 0);
 		}
 
+		printf("\n[+] Ready!");
+
 		return 0;
 	}, inst, NULL, nullptr));
 
