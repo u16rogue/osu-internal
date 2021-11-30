@@ -15,6 +15,9 @@ add_library(osu-cheese-client SHARED
 	"sdk/osu_vec.hpp"
 	"sdk/gamefield.hpp"
 	"sdk/gamefield.cpp"
+	"utils/beatmap.hpp"
+	"utils/beatmap.cpp"
+	"sdk/osu_file.hpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)

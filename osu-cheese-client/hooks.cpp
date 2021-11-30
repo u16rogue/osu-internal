@@ -8,6 +8,8 @@
 #include <gl/GLU.h>
 #include "game.hpp"
 #include "sdk/gamefield.hpp"
+#include <sed/strings.hpp>
+#include "utils/beatmap.hpp"
 
 // TODO: BUG! proxy hook for CWP A causing characters to get corrupted
 
@@ -146,7 +148,22 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 
 static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 {
-	wprintf(L"\n[D] Set [0x%p] -> %s", hWnd, lpString);
+	auto beatmap = sed::str_starts_with(lpString, "osu!  - ");
+	if (!beatmap)
+		return;
+
+	auto bm_file = utils::beatmap::find_file_by_title(beatmap);
+	if (!bm_file)
+	{
+		printf("\n[!] Failed to load beatmap!");
+		return;
+	}
+
+	wprintf(L"\n[D] Loaded beatmap -> %s", (*bm_file).c_str());
+
+	std::vector<sdk::hit_object> obj;
+	utils::beatmap::dump_hitobjects_from_file(*bm_file, obj);
+	printf("\n[D] Dumped %d HitObjects!", obj.size());
 }
 
 static volatile decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;

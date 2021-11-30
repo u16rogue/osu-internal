@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace sed
 {
 	template <typename str1, typename str2>
@@ -15,5 +17,13 @@ namespace sed
 		}
 
 		return nullptr;
+	}
+
+	template <typename T>
+	constexpr auto str_len(const T * str) -> std::size_t
+	{
+		std::size_t len = 0;
+		while (str[len++]);
+		return len - 1;
 	}
 }
