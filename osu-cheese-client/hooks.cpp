@@ -24,13 +24,16 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
-	features::assist::run_aimassist(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	if (variant == CallWindowProc_variant::MOUSE && Msg == WM_MOUSEMOVE)
+		features::assist::run_aimassist(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 
-	if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
-	{
-		auto [px, py] = sdk::game_field::s2f(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		DEBUG_PRINTF("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
-	}
+	#ifdef OSU_CHEESE_DEBUG_BUILD
+		if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
+		{
+			auto [px, py] = sdk::game_field::v2f(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			DEBUG_PRINTF("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
+		}
+	#endif
 	
 	return false;
 }
@@ -158,6 +161,8 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 		jmp eax
 	}
 }
+
+// TODO: hook clipcursor
 
 auto hooks::install() -> bool
 {

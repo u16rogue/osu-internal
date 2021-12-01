@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <vector>
 #include "../sdk/osu_file.hpp"
+#include <Windows.h>
 
 namespace features
 {
@@ -16,8 +17,11 @@ namespace features
 
 		assist() = delete;
 		static auto load_beatmap(std::filesystem::path & file) -> void;
-		static auto run_aimassist(int vx, int vy) -> void;
+		static auto run_aimassist(HWND osu_wnd, int vx, int vy) -> void;
 		static auto run_relax(int vx, int vy) -> void;
+
+	private:
+		static auto get_coming_hitobject() -> const sdk::hit_object *;
 
 	private:
 		inline static hitobjects_t hitobjects;

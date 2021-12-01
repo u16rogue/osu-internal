@@ -1,0 +1,4 @@
+[submodule "dependencies/gl3w"]
+	path = dependencies/gl3w
+	url = https://github.com/skaslev/gl3w.git
+	shallow = true

@@ -22,10 +22,10 @@ namespace sdk
 
 		static auto resize(int vw, int vh, float size = 1.f) -> void;
 		
-		// Screen to field (/world)
-		static auto s2f(int x, int y) -> std::pair<float, float>;
+		// view to field (/world)
+		static auto v2f(int x, int y) -> std::pair<float, float>;
 
-		// Field to screen
-		static auto f2s(int x, int y) -> std::pair<float, float>;
+		// Field to view
+		static auto f2v(float x, float y) -> std::pair<int, int>;
 	};
 }
