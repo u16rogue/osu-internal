@@ -5,6 +5,12 @@ project(osu-cheese CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Settings
+option(DEFINE_DEBUG_MACRO "Enables the OSU_CHEESE_DEBUG_BUILD macro. (DOES NOT SET BUILD MODE TO DEBUG!)" OFF)
+if (DEFINE_DEBUG_MACRO)
+    add_compile_definitions(OSU_CHEESE_DEBUG_BUILD)
+endif ()
+
 # Libraries
 add_subdirectory("framework")
 add_subdirectory("dependencies/imgui")

@@ -10,6 +10,7 @@
 #include "sdk/gamefield.hpp"
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
+#include "features/assist.hpp"
 
 // TODO: BUG! proxy hook for CWP A causing characters to get corrupted
 
@@ -23,34 +24,12 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
-	static int reso_mode = 0;
-	static float resos[][2] =
-	{
-		{  800.f, 600.f },
-		{ 1024.f, 768.f },
-		{ 1024.f, 600.f },
-		{ 1280.f, 720.f },
-		{ 1280.f, 768.f },
-		{ 1360.f, 768.f },
-		{ 1600.f, 900.f }
-	};
+	features::assist::run_aimassist(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 
-	if (variant == CallWindowProc_variant::KEY && Msg == WM_KEYDOWN)
-	{
-		printf("\n[D] Key -> 0x%x", wParam);
-		switch (wParam)
-		{
-			case VK_HOME:
-				reso_mode = (reso_mode + 1) % (sizeof(resos) / sizeof(resos[0]));
-				sdk::game_field::resize(resos[reso_mode][0], resos[reso_mode][1]);
-				printf("\n[D] Force change resolution mode to: %.0f x %.0f", resos[reso_mode][0], resos[reso_mode][1]);
-				break;
-		};
-	}
-	else if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
+	if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
 	{
 		auto [px, py] = sdk::game_field::s2f(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		printf("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
+		DEBUG_PRINTF("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
 	}
 	
 	return false;
@@ -155,15 +134,11 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	auto bm_file = utils::beatmap::find_file_by_title(beatmap);
 	if (!bm_file)
 	{
-		printf("\n[!] Failed to load beatmap!");
+		DEBUG_PRINTF("\n[!] Failed to load beatmap!");
 		return;
 	}
 
-	wprintf(L"\n[D] Loaded beatmap -> %s", (*bm_file).c_str());
-
-	std::vector<sdk::hit_object> obj;
-	utils::beatmap::dump_hitobjects_from_file(*bm_file, obj);
-	printf("\n[D] Dumped %d HitObjects!", obj.size());
+	features::assist::load_beatmap(*bm_file);
 }
 
 static volatile decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
@@ -186,23 +161,23 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 
 auto hooks::install() -> bool
 {
-	printf("\n[+] Installing hooks..."
-	       "\n[+] Importing gdi32full.SwapBuffers...");
+	DEBUG_PRINTF("\n[+] Installing hooks..."
+	             "\n[+] Importing gdi32full.SwapBuffers...");
 	
 	gdi32full_SwapBuffers_target = reinterpret_cast<decltype(gdi32full_SwapBuffers_target)>(GetProcAddress(GetModuleHandleW(L"gdi32full.dll"), "SwapBuffers"));
 	if (!gdi32full_SwapBuffers_target)
 	{
-		printf("\n[!] Failed to import gdi32full.SwapBuffers");
+		DEBUG_PRINTF("\n[!] Failed to import gdi32full.SwapBuffers");
 		return false;
 	}
-	printf(" 0x%p", gdi32full_SwapBuffers_target);
+	DEBUG_PRINTF(" 0x%p", gdi32full_SwapBuffers_target);
 
 	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	) {
-		printf("\n[!] Failed to install hooks!");
+		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
 	}
 	

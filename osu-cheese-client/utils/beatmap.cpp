@@ -3,15 +3,13 @@
 #include <fstream>
 #include <memory>
 #include <sed/strings.hpp>
-
-// TODO: !! DEBUG
-#include <iostream>
+#include <sed/macro.hpp>
 
 auto utils::beatmap::find_file_by_title(std::wstring_view title) -> std::optional<std::filesystem::path>
 {
 	// TODO: implement better beatmap detection, this is really ghetto...
 
-	auto diff_tok = title.find_first_of('[');
+	auto diff_tok = title.find_last_of('[');
 	auto song_title = title.substr(0, diff_tok - 1);
 	auto difficulty = title.substr(diff_tok);
 
@@ -81,16 +79,16 @@ static auto beatmap_next_object(char *& buffer, char * end) -> bool
 static auto beatmap_parse_item(char *& buffer, char * end, int & out_value) -> bool
 {
 	// TODO: implement this better
-	for (int i = 0; &buffer[i] < end; ++i)
+	for (; buffer < end; ++buffer)
 	{
-		if (buffer[i] < '0' || buffer[i] > '9')
+		if (*buffer < '0' || *buffer > '9')
 		{
-			buffer = &buffer[i + 1];
+			++buffer;
 			return true;
 		}
 
 		out_value *= 10;
-		out_value += buffer[i] - '0';
+		out_value += *buffer - '0';
 	}
 
 	return false;
@@ -128,7 +126,7 @@ auto utils::beatmap::dump_hitobjects_from_file(std::filesystem::path file, std::
 		beatmap_parse_item(current, eob, y);
 		beatmap_parse_item(current, eob, time);
 		beatmap_parse_item(current, eob, type);
-
+		
 		out_objects.emplace_back(sdk::hit_object
 		{
 			.x = float(x),

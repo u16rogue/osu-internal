@@ -12,15 +12,18 @@ auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
 {
 	if (reason == DLL_PROCESS_ATTACH) sed::smart_handle(CreateThread(nullptr, NULL, [](LPVOID inst) -> DWORD
 	{
-		sed::console::init();
-		printf("\n[+] Initializing...");
+		#ifdef OSU_CHEESE_DEBUG_BUILD
+			sed::console::init();
+		#endif
+		
+		DEBUG_PRINTF("\n[+] Initializing...");
 		if (!game::initialize() || !hooks::install())
 		{
-			printf("\n[!] Initialization failed");
+			DEBUG_PRINTF("\n[!] Initialization failed");
 			FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(inst), 0);
 		}
 
-		printf("\n[+] Ready!");
+		DEBUG_PRINTF("\n[+] Ready!");
 
 		return 0;
 	}, inst, NULL, nullptr));
