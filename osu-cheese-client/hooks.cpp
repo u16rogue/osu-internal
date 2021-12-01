@@ -4,15 +4,17 @@
 #include <windowsx.h>
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
-#include <gl/GL.h>
-#include <gl/GLU.h>
 #include "game.hpp"
 #include "sdk/gamefield.hpp"
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
 #include "features/assist.hpp"
+#include <GL/gl3w.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_win32.h>
+#include <imgui.h>
 
-// TODO: BUG! proxy hook for CWP A causing characters to get corrupted
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 enum class CallWindowProc_variant : int
 {
@@ -24,6 +26,9 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
+	if (variant == CallWindowProc_variant::MOUSE && ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam))
+		return true;
+
 	if (variant == CallWindowProc_variant::MOUSE && Msg == WM_MOUSEMOVE)
 		features::assist::run_aimassist(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 
@@ -108,6 +113,29 @@ static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, 
 
 static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 {
+	static bool init = true;
+	if (init)
+	{
+		HGLRC ctx = wglCreateContext(hdc);
+		gl3wInit();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+		ImGui::GetIO().IniFilename = nullptr;
+		ImGui_ImplWin32_Init(WindowFromDC(hdc));
+		ImGui_ImplOpenGL3_Init();
+		init = false;
+	}
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("osu!cheese");
+	ImGui::Text("Hello world!");
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 }
 

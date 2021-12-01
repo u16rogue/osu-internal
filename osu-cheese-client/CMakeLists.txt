@@ -27,9 +27,11 @@ set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(osu-cheese-client PRIVATE
 	osu-cheese-framework
 	imgui
+	gl3w
 )
 
 target_include_directories(osu-cheese-client PRIVATE
 	${osu-cheese-framework-includes}
 	${imgui-includes}
+	${gl3w-includes}
 )
