@@ -13,8 +13,7 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
 #include <imgui.h>
-
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+#include "menu.hpp"
 
 enum class CallWindowProc_variant : int
 {
@@ -26,19 +25,14 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
-	if (variant == CallWindowProc_variant::MOUSE && ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam))
+	if (menu::wndproc(hWnd, Msg, wParam, lParam))
 		return true;
 
-	if (variant == CallWindowProc_variant::MOUSE && Msg == WM_MOUSEMOVE)
-		features::assist::run_aimassist(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-
-	#ifdef OSU_CHEESE_DEBUG_BUILD
-		if (variant == CallWindowProc_variant::MOUSE && Msg == WM_LBUTTONDOWN)
-		{
-			auto [px, py] = sdk::game_field::v2f(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			DEBUG_PRINTF("\n[D] Click -> [X: %d (%.2f), Y: %d (%.2f), TIME: %d, INGAME: %d, PLAYER: 0x%p] @ 0x%p", GET_X_LPARAM(lParam), px, GET_Y_LPARAM(lParam), py, game::p_game_info->beat_time, game::pp_info_player->async_complete, *game::pp_info_player, hWnd);
-		}
-	#endif
+	if (variant == CallWindowProc_variant::MOUSE)
+	{
+		if (Msg == WM_MOUSEMOVE)
+			features::assist::run_aimassist(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	}
 	
 	return false;
 }
@@ -116,7 +110,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	static bool init = true;
 	if (init)
 	{
-		HGLRC ctx = wglCreateContext(hdc);
+		//HGLRC ctx = wglCreateContext(hdc);
 		gl3wInit();
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
@@ -129,14 +123,9 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-
-	ImGui::Begin("osu!cheese");
-	ImGui::Text("Hello world!");
-	ImGui::End();
-
+	menu::render();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 }
 
 static volatile decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };

@@ -20,6 +20,8 @@ add_library(osu-cheese-client SHARED
 	"sdk/osu_file.hpp"
 	"features/assist.hpp"
 	"features/assist.cpp"	
+	"menu.hpp"
+	"menu.cpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
