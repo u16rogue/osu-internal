@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include "../sdk/osu_file.hpp"
 
 namespace manager
 {
@@ -18,7 +19,13 @@ namespace manager
 		inline static float offset_y    = 0.f;
 
 	public:
+
+		inline static int mouse_x { 0 }, mouse_y { 0 };
+
 		game_field() = delete;
+
+		static auto update_pos(int x, int y) -> void;
+		static auto dist_view2obj(int x, int y, const sdk::hit_object & obj) -> float;
 
 		static auto resize(int vw, int vh, float size = 1.f) -> void;
 		

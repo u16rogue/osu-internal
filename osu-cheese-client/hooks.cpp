@@ -4,17 +4,22 @@
 #include <windowsx.h>
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
-#include "game.hpp"
-#include "manager/gamefield_manager.hpp"
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
-#include "features/assist.hpp"
+
+#include "manager/gamefield_manager.hpp"
 #include "manager/beatmap_manager.hpp"
+
 #include <GL/gl3w.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
 #include <imgui.h>
+
+#include "game.hpp"
 #include "menu.hpp"
+
+#include "features/assist.hpp"
+#include "features/visuals.hpp"
 
 enum class CallWindowProc_variant : int
 {
@@ -32,7 +37,12 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
 		if (Msg == WM_MOUSEMOVE)
-			features::assist::run_aimassist(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		{
+			auto x = GET_X_LPARAM(lParam);
+			auto y = GET_Y_LPARAM(lParam);
+			manager::game_field::update_pos(x, y);
+			features::assist::run_aimassist(hWnd, x, y);
+		}
 	}
 	
 	return false;
@@ -124,6 +134,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	features::visuals::render();
 	menu::render();
 
 	ImGui::Render();

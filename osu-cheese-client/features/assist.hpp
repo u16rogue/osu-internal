@@ -1,8 +1,5 @@
 #pragma once
 
-#include <filesystem>
-#include <vector>
-#include "../sdk/osu_file.hpp"
 #include <Windows.h>
 
 // TODO: separate module as beatmap manager
@@ -13,7 +10,7 @@ namespace features
 	{
 	public:
 		inline static bool  aa_enable = true;
-		inline static float aa_fov = 60.f;
+		inline static float aa_fov = 500.f;
 		inline static int   aa_timeoffset = 20;
 
 		assist() = delete;

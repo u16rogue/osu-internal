@@ -1,6 +1,19 @@
 #include "gamefield_manager.hpp"
 
+#include <math.h>
 #include <sed/macro.hpp>
+
+auto manager::game_field::update_pos(int x, int y) -> void
+{
+	mouse_x = x;
+	mouse_y = y;
+}
+
+auto manager::game_field::dist_view2obj(int x, int y, const sdk::hit_object & obj) -> float
+{
+	auto [fx, fy] = game_field::v2f(x, y);
+	return std::sqrt(std::pow(obj.x - fx, 2) + std::pow(obj.y - fy, 2));
+}
 
 auto manager::game_field::resize(int vw, int vh, float size) -> void
 {

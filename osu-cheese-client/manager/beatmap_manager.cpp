@@ -28,6 +28,9 @@ auto manager::beatmap::unload() -> void
 
 auto manager::beatmap::get_coming_hitobject() -> const sdk::hit_object *
 {
+	if (hitobjects.empty())
+		return nullptr;
+
 	// TODO: optimize this to skip past iterated hitobjects
 	for (int i = 0; i < hitobjects.size() - 1; ++i)
 	{
