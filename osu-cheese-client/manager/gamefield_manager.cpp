@@ -1,7 +1,11 @@
-#include "gamefield.hpp"
+#include "gamefield_manager.hpp"
 
-auto sdk::game_field::resize(int vw, int vh, float size) -> void
+#include <sed/macro.hpp>
+
+auto manager::game_field::resize(int vw, int vh, float size) -> void
 {
+	DEBUG_PRINTF("\n[D] view resize: %d, %d", vw, vh);
+
 	float window_ratio = static_cast<float>(vh) / osu_native_h;
 
 	float w = osu_field_w * window_ratio * size;
@@ -15,7 +19,7 @@ auto sdk::game_field::resize(int vw, int vh, float size) -> void
 	game_field::field_ratio = h / osu_field_h;
 }
 
-auto sdk::game_field::v2f(int x, int y) -> std::pair<float, float>
+auto manager::game_field::v2f(int x, int y) -> std::pair<float, float>
 {
 	return std::make_pair(
 		(static_cast<float>(x) - game_field::offset_x) / field_ratio,
@@ -23,7 +27,7 @@ auto sdk::game_field::v2f(int x, int y) -> std::pair<float, float>
 	);
 }
 
-auto sdk::game_field::f2v(float x, float y) -> std::pair<int, int>
+auto manager::game_field::f2v(float x, float y) -> std::pair<int, int>
 {
 	return std::make_pair(
 		static_cast<int>(x * field_ratio + game_field::offset_x),

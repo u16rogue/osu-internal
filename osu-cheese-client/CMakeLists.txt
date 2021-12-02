@@ -13,15 +13,19 @@ add_library(osu-cheese-client SHARED
 	"sdk/info_struct.hpp"
 	"sdk/info_player.hpp"
 	"sdk/osu_vec.hpp"
-	"sdk/gamefield.hpp"
-	"sdk/gamefield.cpp"
+	"manager/gamefield_manager.hpp"
+	"manager/gamefield_manager.cpp"
 	"utils/beatmap.hpp"
 	"utils/beatmap.cpp"
 	"sdk/osu_file.hpp"
 	"features/assist.hpp"
-	"features/assist.cpp"	
+	"features/assist.cpp"
 	"menu.hpp"
 	"menu.cpp"
+	"features/visuals.hpp"
+	"features/visuals.cpp"
+	"manager/beatmap_manager.hpp"
+	"manager/beatmap_manager.cpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)

@@ -5,10 +5,11 @@
 #include <sed/console.hpp>
 #include <sed/memory.hpp>
 #include "game.hpp"
-#include "sdk/gamefield.hpp"
+#include "manager/gamefield_manager.hpp"
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
 #include "features/assist.hpp"
+#include "manager/beatmap_manager.hpp"
 #include <GL/gl3w.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
@@ -158,7 +159,11 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 		return;
 	}
 
-	features::assist::load_beatmap(*bm_file);
+	RECT wr {};
+	GetClientRect(hWnd, &wr);
+	
+	manager::game_field::resize(wr.right, wr.bottom);
+	manager::beatmap::load(*bm_file);
 }
 
 static volatile decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;

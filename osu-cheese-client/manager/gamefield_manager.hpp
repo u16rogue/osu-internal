@@ -2,7 +2,7 @@
 
 #include <tuple>
 
-namespace sdk
+namespace manager
 {
 	class game_field
 	{
