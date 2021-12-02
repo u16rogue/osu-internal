@@ -23,6 +23,7 @@ auto manager::beatmap::load(std::filesystem::path & file) -> bool
 
 auto manager::beatmap::unload() -> void
 {
+	hitobjects.clear();
 }
 
 auto manager::beatmap::get_coming_hitobject() -> const sdk::hit_object *

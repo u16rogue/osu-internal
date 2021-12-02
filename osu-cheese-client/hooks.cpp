@@ -108,8 +108,7 @@ static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, 
 
 static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 {
-	static bool init = true;
-	if (init)
+	if (static bool init = true; init)
 	{
 		//HGLRC ctx = wglCreateContext(hdc);
 		gl3wInit();
@@ -124,7 +123,9 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
 	menu::render();
+
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -148,9 +149,17 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 
 static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 {
-	auto beatmap = sed::str_starts_with(lpString, "osu!  - ");
+	auto beatmap = sed::str_starts_with(lpString, "osu!");
 	if (!beatmap)
 		return;
+
+	beatmap = sed::str_starts_with(beatmap, "  - ");
+	if (!beatmap)
+	{
+		manager::beatmap::unload();
+		DEBUG_PRINTF("\n[D] Unloaded beatmap!");
+		return;
+	}
 
 	auto bm_file = utils::beatmap::find_file_by_title(beatmap);
 	if (!bm_file)
