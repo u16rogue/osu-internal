@@ -204,8 +204,6 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 	}
 }
 
-// TODO: hook clipcursor
-
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
@@ -228,7 +226,5 @@ auto hooks::install() -> bool
 		return false;
 	}
 	
-	
-
 	return true;
 }

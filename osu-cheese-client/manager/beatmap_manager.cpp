@@ -26,18 +26,18 @@ auto manager::beatmap::unload() -> void
 	hitobjects.clear();
 }
 
-auto manager::beatmap::get_coming_hitobject() -> const sdk::hit_object *
+auto manager::beatmap::get_coming_hitobject() -> std::pair<const sdk::hit_object *, int>
 {
 	if (hitobjects.empty())
-		return nullptr;
+		return std::make_pair(nullptr, -1);
 
 	// TODO: optimize this to skip past iterated hitobjects
 	for (int i = 0; i < hitobjects.size() - 1; ++i)
 	{
 		const auto & o = hitobjects;
 		if (game::p_game_info->beat_time <= o[i].time && (i == 0 || game::p_game_info->beat_time > o[i - 1].time))
-			return &o[i];
+			return std::make_pair(&o[i], i);
 	}
 
-	return nullptr;
+	return std::make_pair(nullptr, -1);
 }

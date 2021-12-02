@@ -5,6 +5,7 @@
 #include "../game.hpp"
 #include <vector>
 #include <filesystem>
+#include <tuple>
 
 namespace manager
 {
@@ -18,7 +19,7 @@ namespace manager
 		static auto load(std::filesystem::path & file) -> bool;
 		static auto unload() -> void;
 
-		static auto get_coming_hitobject() -> const sdk::hit_object *;
+		static auto get_coming_hitobject() -> std::pair<const sdk::hit_object *, int>;
 
 	private:
 		inline static hitobjects_t hitobjects;

@@ -11,14 +11,14 @@ auto features::visuals::render() -> void
 	if (!game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	const sdk::hit_object * ho = manager::beatmap::get_coming_hitobject();
+	auto [ho, i] = manager::beatmap::get_coming_hitobject();
 	if (!ho)
 		return;
 
 	auto draw = ImGui::GetBackgroundDrawList();
 	auto [ho_x, ho_y] = manager::game_field::f2v(ho->x, ho->y);
 	std::string esptxt; 
-
+	
 	if (ho_timer)
 		esptxt.append("TIME: " + std::to_string(ho->time - game::p_game_info->beat_time) + "\n");
 

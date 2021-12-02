@@ -27,12 +27,14 @@ auto menu::render() -> void
 
 	ImGui::Checkbox("Aim assist", &features::assist::aa_enable);
 	OC_IMGUI_HOVER_TXT("Enable aim assistance - Corrects your aim to the neareast hit object when moving your cursor.");
-	
-	ImGui::SliderFloat("FOV:", &features::assist::aa_fov, 0.f, 800.f);
+	ImGui::SliderFloat("FOV", &features::assist::aa_fov, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Distance between your cursor and the hit object required before aim assistance activates.");
-	
-	ImGui::SliderInt("Target time offset", &features::assist::aa_timeoffset, 0, 10000);
-	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active. (curtime >= ho.time - time_offset)");
+	ImGui::SliderFloat("Safezone FOV", &features::assist::aa_safezone, 0.f, 800.f);
+	OC_IMGUI_HOVER_TXT("Disables the aim assist when the player cursor is within the safezone.");
+	ImGui::SliderFloat("Assist strength", &features::assist::aa_strength, 0.f, 60.f);
+	OC_IMGUI_HOVER_TXT("Strength of the aim assist.");
+	ImGui::SliderFloat("Target time offset ratio", &features::assist::aa_timeoffsetratio, 0.f, 1.f);
+	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active.");
 
 	ImGui::Separator();
 
