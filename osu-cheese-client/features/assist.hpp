@@ -11,7 +11,7 @@ namespace features
 	public:
 		inline static bool  aa_enable = false;
 		inline static float aa_fov = 0.f;
-		inline static float aa_safezone = 80.f;
+		inline static float aa_safezone = 18.f;
 		inline static float aa_strength = 20.f;
 		inline static float aa_timeoffsetratio = 0.8f;
 

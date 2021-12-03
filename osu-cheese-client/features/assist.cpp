@@ -21,7 +21,7 @@ auto features::assist::run_aimassist(HWND osu_wnd, int vx, int vy) -> void
 	if (aa_timeoffsetratio != 0.f && i != 0)
 	{
 		auto prev = ho - 1;
-		auto time_sub = ho->time - ((ho->time - prev->time) * aa_timeoffsetratio);
+		auto time_sub = ho->time - ((ho->time - prev->time) * (1.f - aa_timeoffsetratio));
 		if (game::p_game_info->beat_time < time_sub)
 			return;
 	}
@@ -44,6 +44,9 @@ auto features::assist::run_aimassist(HWND osu_wnd, int vx, int vy) -> void
 		ho_filter = ho;
 		return;
 	}
+
+	// Prevent overshoot by clamping strength
+	auto final_addition = std::clamp(aa_strength, 0.f, dist);
 
 	POINT pscr { .x = vx + LONG(aa_strength * normx), .y = vy + LONG(aa_strength * normy) };
 	ClientToScreen(osu_wnd, &pscr);
