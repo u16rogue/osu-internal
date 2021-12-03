@@ -5,6 +5,12 @@
 namespace sdk
 {
 	template <typename T>
+	struct basic_vec2
+	{
+		T x, y;
+	};
+
+	template <typename T>
 	struct vec2
 	{
 		T x, y;

@@ -55,4 +55,29 @@ auto features::assist::run_aimassist(HWND osu_wnd, int vx, int vy) -> void
 
 auto features::assist::run_relax(int vx, int vy) -> void
 {
+	static const sdk::hit_object * filter_ho = nullptr;
+
+	if (!rx_enable || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+		return;
+
+	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	if (!ho)
+		return;
+	
+	if (rx_offset >= 0)
+		--ho;
+
+	if (ho->time + rx_offset <= game::p_game_info->beat_time || ho == filter_ho)
+		return;
+
+	filter_ho = ho;
+
+	INPUT inp[2] { 0 };
+	inp[0].type = INPUT_MOUSE;
+	inp[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+
+	inp[1].type = INPUT_MOUSE;
+	inp[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+
+	SendInput(2, inp, sizeof(INPUT));
 }

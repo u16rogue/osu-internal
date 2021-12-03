@@ -41,10 +41,11 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 			auto x = GET_X_LPARAM(lParam);
 			auto y = GET_Y_LPARAM(lParam);
 			manager::game_field::update_pos(x, y);
+			features::assist::run_relax(x, y);
 			features::assist::run_aimassist(hWnd, x, y);
 		}
 	}
-	
+
 	return false;
 }
 
