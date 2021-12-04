@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui.h>
+#include <Windows.h>
 
 namespace sdk
 {
@@ -36,5 +37,6 @@ namespace sdk
 		auto range(const vec2 & to, float field) const -> rangestat;
 
 		operator ImVec2() const;
+		operator POINT() const;
 	};
 }

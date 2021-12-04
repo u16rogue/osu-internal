@@ -65,3 +65,8 @@ sdk::vec2::operator ImVec2() const
 {
 	return ImVec2(this->x, this->y);
 }
+
+sdk::vec2::operator POINT() const
+{
+	return POINT { .x = LONG(this->x), .y = LONG(this->y) };
+}

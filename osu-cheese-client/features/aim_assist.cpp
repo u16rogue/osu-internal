@@ -62,9 +62,8 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 		ho_filter = ho;
 		return false;
 	}
-
-	auto aa_new_pos = player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
-	POINT pscr { .x = LONG(aa_new_pos.x), .y = LONG(aa_new_pos.y) };
+	
+	POINT pscr = player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
 	ClientToScreen(hWnd, &pscr);
 	SetCursorPos(pscr.x, pscr.y);
 	return false;

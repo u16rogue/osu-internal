@@ -2,11 +2,10 @@
 
 #include <Windows.h>
 #include <windowsx.h>
-#include <sed/console.hpp>
+#include <sed/macro.hpp>
 #include <sed/memory.hpp>
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
-#include "sdk/osu_vec.hpp"
 
 #include "manager/gamefield_manager.hpp"
 #include "manager/beatmap_manager.hpp"

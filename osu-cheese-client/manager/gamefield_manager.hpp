@@ -29,9 +29,9 @@ namespace manager
 		static auto resize(int vw, int vh, float size = 1.f) -> void;
 		
 		// view to field (/world) | For abstraction purposes: LEGACY! DO NOT USE!!!
-		static auto v2f(int x, int y) -> std::pair<float, float>;
+		[[deprecated("Use vec2")]] static auto v2f(int x, int y) -> std::pair<float, float>;
 
 		// Field to view | For abstraction purposes: LEGACY! DO NOT USE!!!
-		static auto f2v(float x, float y) -> std::pair<int, int>;
+		[[deprecated("Use vec2")]] static auto f2v(float x, float y) -> std::pair<int, int>;
 	};
 }
