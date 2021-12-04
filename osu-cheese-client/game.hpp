@@ -1,5 +1,7 @@
 #pragma once
 
+// Used for interfacing with the game's internals
+
 #include "sdk/info_player.hpp"
 #include "sdk/info_struct.hpp"
 

@@ -19,8 +19,7 @@
 #include "game.hpp"
 #include "menu.hpp"
 
-#include "features/assist.hpp"
-#include "features/visuals.hpp"
+#include "features/features.hpp"
 
 enum class CallWindowProc_variant : int
 {
@@ -38,13 +37,10 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
 		if (Msg == WM_MOUSEMOVE)
-		{
-			auto x = GET_X_LPARAM(lParam);
-			auto y = GET_Y_LPARAM(lParam);
-			manager::game_field::update_pos(x, y);
-			features::assist::run_relax(x, y);
-			features::assist::run_aimassist(hWnd, sdk::vec2(x, y));
-		}
+			manager::game_field::update_pos(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+
+		if (features::feature::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
+			return true;
 	}
 
 	return false;
@@ -136,7 +132,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	features::visuals::render();
+	features::feature::on_render();
 	menu::render();
 
 	ImGui::Render();

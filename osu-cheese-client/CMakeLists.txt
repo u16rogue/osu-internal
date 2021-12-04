@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(osu-cheese-client SHARED
 	"client_main.cpp"
-	"client_main.hpp"
 	"hooks.hpp"
 	"hooks.cpp"
 	"game.hpp"
@@ -19,14 +18,17 @@ add_library(osu-cheese-client SHARED
 	"utils/beatmap.hpp"
 	"utils/beatmap.cpp"
 	"sdk/osu_file.hpp"
-	"features/assist.hpp"
-	"features/assist.cpp"
 	"menu.hpp"
 	"menu.cpp"
-	"features/visuals.hpp"
-	"features/visuals.cpp"
 	"manager/beatmap_manager.hpp"
 	"manager/beatmap_manager.cpp"
+	"features/aim_assist.hpp"
+	"features/aim_assist.cpp"
+	"features/relax.hpp"
+	"features/relax.cpp"
+	"features/esp.hpp"
+	"features/esp.cpp"
+	"features/features.hpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)

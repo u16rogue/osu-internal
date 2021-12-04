@@ -1,4 +1,5 @@
-#include "client_main.hpp"
+// Main entry point of the client
+
 #include <Windows.h>
 
 #include <sed/windows/smart_handle.hpp>

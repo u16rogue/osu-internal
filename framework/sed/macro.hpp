@@ -21,3 +21,7 @@
 	#define DEBUG_PRINTF(fmt, ...)
 	#define DEBUG_WPRINTF(fmt, ...)
 #endif
+
+#define OC_IMGUI_HOVER_TXT(fmt, ...) \
+	if (ImGui::IsItemHovered()) \
+		ImGui::SetTooltip(fmt, __VA_ARGS__)
