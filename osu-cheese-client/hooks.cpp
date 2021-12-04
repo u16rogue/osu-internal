@@ -6,6 +6,7 @@
 #include <sed/memory.hpp>
 #include <sed/strings.hpp>
 #include "utils/beatmap.hpp"
+#include "sdk/osu_vec.hpp"
 
 #include "manager/gamefield_manager.hpp"
 #include "manager/beatmap_manager.hpp"
@@ -42,7 +43,7 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 			auto y = GET_Y_LPARAM(lParam);
 			manager::game_field::update_pos(x, y);
 			features::assist::run_relax(x, y);
-			features::assist::run_aimassist(hWnd, x, y);
+			features::assist::run_aimassist(hWnd, sdk::vec2(x, y));
 		}
 	}
 

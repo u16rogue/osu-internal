@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "osu_vec.hpp"
 
 namespace sdk
 {
@@ -18,7 +19,7 @@ namespace sdk
 
 	struct hit_object
 	{
-		float x, y; // actually an int, but just using float so we don't have to cast later
+		vec2 coords;
 		int time;
 		hit_type type;
 		int hitsound; // will prolly leave this out cause not needed

@@ -16,18 +16,17 @@ auto features::visuals::render() -> void
 		return;
 
 	auto draw = ImGui::GetBackgroundDrawList();
-	auto [ho_x, ho_y] = manager::game_field::f2v(ho->x, ho->y);
 	std::string esptxt; 
 	
 	if (ho_timer)
 		esptxt.append("TIME: " + std::to_string(ho->time - game::p_game_info->beat_time) + "\n");
 
 	if (ho_distance)
-		esptxt.append("DST: " + std::to_string(manager::game_field::dist_view2obj(manager::game_field::mouse_x, manager::game_field::mouse_y, *ho)) + "\n");
+		esptxt.append("DST: " + std::to_string(ho->coords.distance(manager::game_field::mousepos.view_to_field())) + "\n");
 
 	if (ho_tracer)
-		draw->AddLine(ImVec2 { float(manager::game_field::mouse_x), float(manager::game_field::mouse_y) }, ImVec2 { float(ho_x), float(ho_y) }, 0xFFFFFFFF);
+		draw->AddLine(manager::game_field::mousepos, ho->coords.field_to_view(), 0xFFFFFFFF);
 
 	if (!esptxt.empty())
-		draw->AddText(ImVec2 { float(ho_x), float(ho_y) }, 0xFFFFFFFF, esptxt.c_str());
+		draw->AddText(ho->coords.field_to_view(), 0xFFFFFFFF, esptxt.c_str());
 }

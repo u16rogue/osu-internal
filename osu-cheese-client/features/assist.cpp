@@ -6,7 +6,7 @@
 #include <numbers>
 #include "../manager/beatmap_manager.hpp"
 
-auto features::assist::run_aimassist(HWND osu_wnd, int vx, int vy) -> void
+auto features::assist::run_aimassist(HWND osu_wnd, sdk::vec2 mousepos) -> void
 {
 	static const sdk::hit_object * ho_filter = nullptr;
 
@@ -25,30 +25,23 @@ auto features::assist::run_aimassist(HWND osu_wnd, int vx, int vy) -> void
 		if (game::p_game_info->beat_time < time_sub)
 			return;
 	}
-
-	// TODO: cleanup
-
-	auto [mfx, mfy] = manager::game_field::v2f(vx, vy);
-	auto dist = manager::game_field::dist_view2obj(vx, vy, *ho);
-
-	auto normx = (ho->x - mfx) / dist;
-	auto normy = (ho->y - mfy) / dist;
+	
+	auto player_field_pos = mousepos.view_to_field();
+	auto dist_to_ho = player_field_pos.distance(ho->coords);
 
 	// Check fov
-	if (aa_fov != 0.f && dist > aa_fov)
+	if (aa_fov != 0.f && dist_to_ho > aa_fov)
 		return;
 
 	// Safezone override
-	if (aa_safezone != 0.f && dist <= aa_safezone)
+	if (aa_safezone != 0.f && dist_to_ho <= aa_safezone)
 	{
 		ho_filter = ho;
 		return;
 	}
-
-	// Prevent overshoot by clamping strength
-	auto final_addition = std::clamp(aa_strength, 0.f, dist);
-
-	POINT pscr { .x = vx + LONG(aa_strength * normx), .y = vy + LONG(aa_strength * normy) };
+	
+	auto aa_new_pos = player_field_pos.forward(ho->coords, std::clamp(aa_strength, 0.f, dist_to_ho)).field_to_view();
+	POINT pscr { .x = LONG(aa_new_pos.x), .y = LONG(aa_new_pos.y) };
 	ClientToScreen(osu_wnd, &pscr);
 	SetCursorPos(pscr.x, pscr.y);
 }

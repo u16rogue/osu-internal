@@ -13,6 +13,7 @@ add_library(osu-cheese-client SHARED
 	"sdk/info_struct.hpp"
 	"sdk/info_player.hpp"
 	"sdk/osu_vec.hpp"
+	"sdk/osu_vec.cpp"
 	"manager/gamefield_manager.hpp"
 	"manager/gamefield_manager.cpp"
 	"utils/beatmap.hpp"

@@ -1,20 +1,40 @@
 #pragma once
 
-#include <cstdint>
+#include <imgui.h>
 
 namespace sdk
 {
-	template <typename T>
-	struct basic_vec2
-	{
-		T x, y;
-	};
-
-	template <typename T>
 	struct vec2
 	{
-		T x, y;
-	};
+		enum class rangestat
+		{
+			INSIDE,
+			OUTSIDE
+		};
 
-	using vec2i = vec2<std::int32_t>;
+		float x, y;
+
+		vec2()
+			: x(0.f), y(0.f) {}
+
+		vec2(float x_, float y_)
+			: x(x_), y(y_) {}
+
+		vec2(int x_, int y_)
+			: x(float(x_)), y(float(y_)) {}
+
+		auto distance(const vec2 & to) const -> float;
+
+		auto view_to_field() const -> vec2;
+		static auto view_to_field(vec2 & v) -> void;
+		auto field_to_view() const -> vec2;
+		static auto field_to_view(vec2 & v) -> void;
+		
+		auto normalize(const vec2 & to) const -> vec2;
+		auto forward(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
+
+		auto range(const vec2 & to, float field) const -> rangestat;
+
+		operator ImVec2() const;
+	};
 }

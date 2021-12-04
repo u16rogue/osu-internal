@@ -12,7 +12,7 @@ auto manager::beatmap::load(std::filesystem::path & file) -> bool
 	#ifdef OSU_CHEESE_DEBUG_BUILD
 	{
 		for (const auto & o : hitobjects)
-			DEBUG_PRINTF("\n[D] X: %.0f, Y: %.0f, TIME: %d, TYPE: %d", o.x, o.y, o.time, o.type);
+			DEBUG_PRINTF("\n[D] X: %.0f, Y: %.0f, TIME: %d, TYPE: %d", o.coords.x, o.coords.y, o.time, o.type);
 
 		DEBUG_PRINTF("\n[D] Dumped %d HitObjects!", hitobjects.size());
 	}

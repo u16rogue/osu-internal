@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include "../sdk/osu_vec.hpp"
 
 // TODO: separate module as beatmap manager
 
@@ -21,7 +22,7 @@ namespace features
 		inline static bool rx_offsetrand = false;
 
 		assist() = delete;
-		static auto run_aimassist(HWND osu_wnd, int vx, int vy) -> void;
+		static auto run_aimassist(HWND osu_wnd, sdk::vec2 mousepos) -> void;
 		static auto run_relax(int vx, int vy) -> void;
 	};
 }

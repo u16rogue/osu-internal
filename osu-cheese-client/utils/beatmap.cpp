@@ -129,8 +129,7 @@ auto utils::beatmap::dump_hitobjects_from_file(std::filesystem::path file, std::
 		
 		out_objects.emplace_back(sdk::hit_object
 		{
-			.x = float(x),
-			.y = float(y),
+			sdk::vec2(x, y),
 			.time = time,
 			.type = sdk::hit_type(type)
 		});
