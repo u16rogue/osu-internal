@@ -8,11 +8,27 @@
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
+// TODO: merge this as a cursor manager instead of having separated instances here and on hook.cpp
+static decltype(ShowCursor) * ShowCursor_target = ShowCursor;
+static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
+{
+	_asm
+	{
+		push ebp
+		mov ebp, esp
+		mov eax, ShowCursor_target
+		lea eax, [eax+5]
+		jmp eax
+	}
+}
+
 auto menu::render() -> void
 {
 	if (!menu::visible)
 		return;
 	
+	ImGui::SetNextWindowSize(ImVec2(660.f, 460.f), ImGuiCond_FirstUseEver);
+
 	ImGui::Begin("osu!");
 	ImGui::Text("[PAUSE] Key to toggle menu.");
 
@@ -29,9 +45,10 @@ auto menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 	if (Msg == WM_KEYDOWN && wParam == VK_PAUSE)
 	{
 		menu::visible = !menu::visible;
+		ShowCursor(menu::visible);
 		return true;
 	}
-
+	
 	if (!menu::visible)
 		return false;
 

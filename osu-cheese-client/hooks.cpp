@@ -201,6 +201,30 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 	}
 }
 
+#if 0
+static volatile decltype(ShowCursor) * ShowCursor_target = ShowCursor;
+static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
+{
+	_asm
+	{
+		push ebp
+		mov ebp, esp
+		mov eax, ShowCursor_target
+		lea eax, [eax+5]
+		jmp eax
+	}
+}
+
+static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
+{
+	if (!menu::visible)
+		return ShowCursor_trampoline(bShow);
+
+	menu::last_show_cursor_request = bShow;
+	return bShow ? 0 : -1;
+}
+#endif
+
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
@@ -218,6 +242,7 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
+	//||  !sed::jmprel32_apply(ShowCursor, ShowCursor_hook)
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
