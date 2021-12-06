@@ -28,7 +28,7 @@ auto features::esp::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 auto features::esp::on_render() -> void
 {
-	if (!game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (!game::pp_info_player->async_complete || !manager::beatmap::loaded() || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();

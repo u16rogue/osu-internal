@@ -33,7 +33,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 {
 	static const sdk::hit_object * ho_filter = nullptr;
 
-	if (Msg == WM_MOUSEMOVE || !enable || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (Msg == WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
 
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();

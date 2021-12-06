@@ -2,28 +2,23 @@
 
 auto manager::beatmap::load(std::filesystem::path & file) -> bool
 {
-	std::vector<sdk::hit_object> _mm_ho_copy {}; // doing this because the global one isn't being properly initialized when manually mapped
+	worker_requests = std::make_optional(file);
 
-	if (!utils::beatmap::dump_hitobjects_from_file(file, _mm_ho_copy))
-		hitobjects.clear();
-
-	hitobjects = std::move(_mm_ho_copy);
-
-	#ifdef OSU_CHEESE_DEBUG_BUILD
-	{
-		for (const auto & o : hitobjects)
-			DEBUG_PRINTF("\n[D] X: %.0f, Y: %.0f, TIME: %d, TYPE: %d", o.coords.x, o.coords.y, o.time, o.type);
-
-		DEBUG_PRINTF("\n[D] Dumped %d HitObjects!", hitobjects.size());
-	}
-	#endif
-
+	if (!worker_initialized)
+		worker_thread = std::thread(worker_load);
+	
 	return true;
 }
 
 auto manager::beatmap::unload() -> void
 {
 	hitobjects.clear();
+	status = status_e::UNLOADED;
+}
+
+auto manager::beatmap::loaded() -> bool
+{
+	return status == status_e::LOADED;
 }
 
 auto manager::beatmap::get_coming_hitobject() -> std::pair<const sdk::hit_object *, int>
@@ -40,4 +35,39 @@ auto manager::beatmap::get_coming_hitobject() -> std::pair<const sdk::hit_object
 	}
 
 	return std::make_pair(nullptr, -1);
+}
+
+auto manager::beatmap::worker_load() -> void
+{
+	worker_initialized = true;
+	DEBUG_PRINTF("\n[D] Worker initialized!");
+
+	while (worker_initialized)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		if (!worker_requests)
+			continue;
+
+		DEBUG_PRINTF("\n[D] Worker is now dumping the beatmap...");
+
+		std::filesystem::path file = *worker_requests;
+		worker_requests = std::nullopt;
+		unload();
+		status = status_e::LOADING;
+
+		std::vector<sdk::hit_object> _mm_ho_copy {}; // doing this because the global one isn't being properly initialized when manually mapped
+
+		bool res = utils::beatmap::dump_hitobjects_from_file(file, _mm_ho_copy);
+		//worker_requests.pop();
+
+		if (!res)
+		{
+			status = status_e::UNLOADED;
+			continue;
+		}
+
+		hitobjects = std::move(_mm_ho_copy);
+		status = status_e::LOADED;
+		DEBUG_PRINTF("\n[D] Worker finished dumping the beatmap!");
+	}
 }
