@@ -3,11 +3,6 @@
 #include <math.h>
 #include <sed/macro.hpp>
 
-auto manager::game_field::update_pos(int x, int y) -> void
-{
-	mousepos = sdk::vec2(x, y);
-}
-
 auto manager::game_field::resize(int vw, int vh, float size) -> void
 {
 	DEBUG_PRINTF("\n[D] view resize: %d, %d", vw, vh);

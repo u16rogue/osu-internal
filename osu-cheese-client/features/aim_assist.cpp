@@ -54,7 +54,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 			return false;
 	}
 
-	auto player_field_pos = manager::game_field::mousepos.view_to_field();
+	auto player_field_pos = game::pp_pos_info->pos;
 	auto dist_to_ho = player_field_pos.distance(ho->coords);
 
 	// Check fov
@@ -82,7 +82,7 @@ auto features::aim_assist::on_render() -> void
 	auto draw = ImGui::GetBackgroundDrawList();
 
 	if (vis_fov)
-		draw->AddCircle(manager::game_field::mousepos, fov, 0xFFFFFFFF);
+		draw->AddCircle(game::pp_pos_info->pos, fov, 0xFFFFFFFF);
 
 	if (vis_safezonefov)
 	{

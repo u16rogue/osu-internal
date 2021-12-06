@@ -35,9 +35,6 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
-		if (Msg == WM_MOUSEMOVE)
-			manager::game_field::update_pos(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-
 		if (features::feature::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
 			return true;
 	}

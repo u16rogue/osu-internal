@@ -20,11 +20,7 @@ namespace manager
 		inline static float offset_x    = 0.f;
 		inline static float offset_y    = 0.f;
 
-		inline static sdk::vec2 mousepos;
-
 		game_field() = delete;
-
-		static auto update_pos(int x, int y) -> void;
 
 		static auto resize(int vw, int vh, float size = 1.f) -> void;
 		

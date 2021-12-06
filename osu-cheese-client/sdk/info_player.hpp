@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <sed/macro.hpp>
+#include <sed/memory.hpp>
 
 namespace sdk
 {
@@ -13,43 +14,8 @@ namespace sdk
 		OC_UNS_PAD(0x182, bool, async_complete)
 	};
 
-	class ppinfo_player_t
+	class ppinfo_player_t : public sed::basic_ptrptr<info_player_t>
 	{
-	public:
-		ppinfo_player_t() = default;
-
-		ppinfo_player_t(info_player_t ** ppinfo)
-			: pp_info_player(ppinfo) {};
-
-		auto operator*() -> info_player_t *
-		{
-			if (this->pp_info_player && *this->pp_info_player)
-				return *this->pp_info_player;
-
-			return nullptr;
-		}
-
-		auto operator->() -> info_player_t *
-		{
-			if (this->pp_info_player && *this->pp_info_player)
-				return *this->pp_info_player;
-
-			return &this->info_player_dummy;
-		}
-
-		operator bool() const noexcept
-		{
-			return this->pp_info_player && *this->pp_info_player != nullptr;
-		}
-
-	private:
-		info_player_t ** pp_info_player    { nullptr };
-
-		info_player_t info_player_dummy
-		{
-			.is_replay_mode = false,
-			.async_complete = false
-		};
 	};
 
 }

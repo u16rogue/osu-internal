@@ -27,15 +27,13 @@ static auto pattern_scan_helper(const char * name, T & out, const char * pattern
 auto game::initialize() -> bool
 {
 	DEBUG_PRINTF("\n[+] Loading game information...");
-	sdk::info_player_t ** ppinfo { nullptr };
 
-	if (!pattern_scan_helper("game::p_game_info",    game::p_game_info, "\xDB\x05\x00\x00\x00\x00\xD9\x5D\xF8", "xx????xxx", 0x6)
-	||  !pattern_scan_helper("game::pp_info_player", ppinfo,            "\xFF\x50\x0C\x8B\xD8\x8B\x15",         "xxxxxxx", 0xB) //  /*"\x8B\x15\x00\x00\x00\x00\x8B\x72", "xx????xx"*/ TODO: find better sig
+	if (!pattern_scan_helper("game::p_game_info",    game::p_game_info,    "\xDB\x05\x00\x00\x00\x00\xD9\x5D\xF8",         "xx????xxx",   0x6)
+	||  !pattern_scan_helper("game::pos_info",       game::pp_pos_info.ptr,       "\x8b\x05\x00\x00\x00\x00\xd9\x40\x00\x8b\x15", "xx????xx?xx", 0x6)
+	||  !pattern_scan_helper("game::pp_info_player", game::pp_info_player.ptr, "\xFF\x50\x0C\x8B\xD8\x8B\x15", "xxxxxxx", 0xB) //  /*"\x8B\x15\x00\x00\x00\x00\x8B\x72", "xx????xx"*/ TODO: find better sig
 	) {
 		return false;
 	}
-
-	game::pp_info_player = ppinfo;
 
 	return true;
 }

@@ -42,10 +42,10 @@ auto features::esp::on_render() -> void
 		esptxt.append("TIME: " + std::to_string(ho->time - game::p_game_info->beat_time) + "\n");
 
 	if (distance)
-		esptxt.append("DST: " + std::to_string(ho->coords.distance(manager::game_field::mousepos.view_to_field())) + "\n");
+		esptxt.append("DST: " + std::to_string(ho->coords.distance(game::pp_pos_info->pos.view_to_field())) + "\n");
 
 	if (tracer)
-		draw->AddLine(manager::game_field::mousepos, ho->coords.field_to_view(), 0xFFFFFFFF);
+		draw->AddLine(game::pp_pos_info->pos, ho->coords.field_to_view(), 0xFFFFFFFF);
 
 	if (!esptxt.empty())
 		draw->AddText(ho->coords.field_to_view(), 0xFFFFFFFF, esptxt.c_str());
