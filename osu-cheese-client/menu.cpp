@@ -35,6 +35,24 @@ auto menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 	if (!menu::visible)
 		return false;
 
+	
 	ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
-	return true;
+
+	switch (Msg)
+	{
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_LBUTTONDBLCLK:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONDBLCLK:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONDBLCLK:
+		case WM_XBUTTONDOWN:
+		case WM_XBUTTONUP:
+			return true;
+	}
+
+	return false;
 }
