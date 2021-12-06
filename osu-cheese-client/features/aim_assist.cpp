@@ -26,6 +26,11 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::SliderFloat("Target time offset ratio", &timeoffsetratio, 0.f, 1.f);
 	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active.");
 
+	ImGui::Separator();
+
+	ImGui::Checkbox("Visualize Aim FOV", &vis_fov);
+	ImGui::Checkbox("Visualize Safezone FOV", &vis_safezonefov);
+
 	ImGui::EndTabItem();
 }
 
@@ -35,7 +40,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 
 	if (Msg == WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
-
+	
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();
 	if (!ho || ho == ho_filter)
 		return false;
@@ -63,12 +68,29 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 		return false;
 	}
 	
-	POINT pscr = player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
+	POINT pscr = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
 	ClientToScreen(hWnd, &pscr);
 	SetCursorPos(pscr.x, pscr.y);
-	return false;
+	return true;
 }
 
 auto features::aim_assist::on_render() -> void
 {
+	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
+		return;
+
+	auto draw = ImGui::GetBackgroundDrawList();
+
+	if (vis_fov)
+		draw->AddCircle(manager::game_field::mousepos, fov, 0xFFFFFFFF);
+
+	if (vis_safezonefov)
+	{
+		auto [ho, i] = manager::beatmap::get_coming_hitobject();
+		if (!ho)
+			return;
+
+		draw->AddCircle(ho->coords.field_to_view(), safezone, 0xFFFFFFFF);
+	}
+
 }

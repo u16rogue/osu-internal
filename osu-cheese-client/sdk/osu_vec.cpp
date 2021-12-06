@@ -61,6 +61,11 @@ auto sdk::vec2::range(const vec2 & to, float field) const -> rangestat
 	return this->distance(to) <= field ? rangestat::INSIDE : rangestat::OUTSIDE;
 }
 
+auto sdk::vec2::operator==(const vec2 & rhs) const noexcept -> bool
+{
+	return this->x == rhs.x && this->y == rhs.y;
+}
+
 sdk::vec2::operator ImVec2() const
 {
 	return ImVec2(this->x, this->y);

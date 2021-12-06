@@ -36,6 +36,8 @@ namespace sdk
 
 		auto range(const vec2 & to, float field) const -> rangestat;
 
+		auto operator ==(const vec2 & rhs) const noexcept -> bool;
+
 		operator ImVec2() const;
 		operator POINT() const;
 	};

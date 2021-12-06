@@ -8,20 +8,6 @@
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-// TODO: merge this as a cursor manager instead of having separated instances here and on hook.cpp
-static decltype(ShowCursor) * ShowCursor_target = ShowCursor;
-static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
-{
-	_asm
-	{
-		push ebp
-		mov ebp, esp
-		mov eax, ShowCursor_target
-		lea eax, [eax+5]
-		jmp eax
-	}
-}
-
 auto menu::render() -> void
 {
 	if (!menu::visible)

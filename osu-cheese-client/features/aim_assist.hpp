@@ -12,6 +12,9 @@ namespace features
 		inline static float strength = 20.f;
 		inline static float timeoffsetratio = 0.8f;
 
+		inline static bool vis_fov = false;
+		inline static bool vis_safezonefov = false;
+
 	public:
 		aim_assist() = delete;
 		static auto on_tab_render() -> void;

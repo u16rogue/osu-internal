@@ -20,12 +20,8 @@ add_subdirectory("dependencies/imgui")
 option(BUILD_CLIENT "Build's the client library (DLL)." ON)
 option(BUILD_LOADER "Build's the loader executable, this depends on the CLIENT project." ON)
 
-# Force client if loader build is enabled
 if (BUILD_LOADER)
-    set(BUILD_CLIENT ON)
-endif ()
-
-if (BUILD_LOADER)
+    set(BUILD_CLIENT ON) # Force client if loader build is enabled
     add_subdirectory("osu-cheese-client")
 endif ()
 
