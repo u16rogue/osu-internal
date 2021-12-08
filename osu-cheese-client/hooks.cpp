@@ -222,6 +222,28 @@ static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
 }
 #endif
 
+// Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl ( very useful :))) !!! )
+// rebuilt from assembly, due to clr being jitted this might get outdated soon!
+static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
+{
+	*out_coords = game::pp_pos_info->pos.view_to_field();
+}
+
+static auto __attribute__((naked)) __fastcall osu_set_field_coords_proxy(void * ecx, sdk::vec2 * out_coords) -> void
+{
+	__asm
+	{
+		push esi
+		sub esp, 8
+		//push esp
+		call osu_set_field_coords_rebuilt
+		//pop esp
+		add esp, 8
+		pop esi
+		ret 8
+	}
+}
+
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
@@ -235,11 +257,20 @@ auto hooks::install() -> bool
 	}
 	DEBUG_PRINTF(" 0x%p", gdi32full_SwapBuffers_target);
 
+	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
+	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xec\x00\x8b\xf2", "xxx?xx"));
+	if (!osu_set_field_coords_target)
+	{
+		DEBUG_PRINTF("\n[!] Failed to look for osu_set_field_coords!");
+		return false;
+	}
+	DEBUG_PRINTF(" 0x%p", osu_set_field_coords_target);
+
 	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
-	//||  !sed::jmprel32_apply(ShowCursor, ShowCursor_hook)
+	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
