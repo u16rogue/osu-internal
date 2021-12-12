@@ -29,7 +29,8 @@ add_library(osu-cheese-client SHARED
 	"features/esp.hpp"
 	"features/esp.cpp"
 	"features/features.hpp"
- "sdk/position_info.hpp")
+	"sdk/position_info.hpp"
+)
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
 

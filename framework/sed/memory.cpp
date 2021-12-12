@@ -18,9 +18,9 @@ auto sed::abs32(void * instruction, std::size_t size) -> std::uintptr_t
 	return *reinterpret_cast<std::uintptr_t *>(reinterpret_cast<std::uintptr_t>(instruction) + size - sizeof(std::uintptr_t));
 }
 
-auto sed::jmprel32_apply(void * from, void * to) -> bool
+auto sed::op1rel32_apply(std::uint8_t opcode, void * from, void * to) -> bool
 {
-	std::uint8_t shell[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
+	std::uint8_t shell[] = { opcode, 0x00, 0x00, 0x00, 0x00 };
 	*reinterpret_cast<std::uintptr_t *>(shell + 1) = sed::abs2rel32(from, sizeof(shell), to);
 
 	DWORD oprot { 0 };
@@ -34,6 +34,16 @@ auto sed::jmprel32_apply(void * from, void * to) -> bool
 		return false;
 
 	return true;
+}
+
+auto sed::jmprel32_apply(void * from, void * to) -> bool
+{
+	return sed::op1rel32_apply(0xE9, from, to);
+}
+
+auto sed::callrel32_apply(void * from, void * to) -> bool
+{
+	return sed::op1rel32_apply(0xE8, from, to);
 }
 
 auto sed::pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t

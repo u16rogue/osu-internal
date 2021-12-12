@@ -33,6 +33,13 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	if (menu::wndproc(hWnd, Msg, wParam, lParam))
 		return true;
 
+	// HACK: tesing coord system, remove later!
+	if (variant == CallWindowProc_variant::KEY && Msg == WM_KEYDOWN && wParam == VK_NUMPAD0)
+	{
+		game::pp_pos_info->pos.x += 20.f;
+		DEBUG_PRINTF("\n[D] sent move!");
+	}
+
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
 		if (features::feature::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
@@ -212,6 +219,8 @@ static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
 	}
 }
 
+
+
 static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
 {
 	if (!menu::visible)
@@ -229,7 +238,7 @@ static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_
 	*out_coords = game::pp_pos_info->pos.view_to_field();
 }
 
-static auto __attribute__((naked)) __fastcall osu_set_field_coords_proxy(void * ecx, sdk::vec2 * out_coords) -> void
+static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::vec2 * out_coords) -> void
 {
 	__asm
 	{
@@ -244,11 +253,17 @@ static auto __attribute__((naked)) __fastcall osu_set_field_coords_proxy(void * 
 	}
 }
 
+static auto __stdcall osu_set_raw_coords_rebuilt() -> void
+{
+
+}
+
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
 	             "\n[+] Importing gdi32full.SwapBuffers...");
 	
+	// Swap buffers
 	gdi32full_SwapBuffers_target = reinterpret_cast<decltype(gdi32full_SwapBuffers_target)>(GetProcAddress(GetModuleHandleW(L"gdi32full.dll"), "SwapBuffers"));
 	if (!gdi32full_SwapBuffers_target)
 	{
@@ -257,6 +272,7 @@ auto hooks::install() -> bool
 	}
 	DEBUG_PRINTF(" 0x%p", gdi32full_SwapBuffers_target);
 
+	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
 	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xec\x00\x8b\xf2", "xxx?xx"));
 	if (!osu_set_field_coords_target)
@@ -265,12 +281,31 @@ auto hooks::install() -> bool
 		return false;
 	}
 	DEBUG_PRINTF(" 0x%p", osu_set_field_coords_target);
+	
+	// Set raw input coordinates
+	DEBUG_PRINTF("\n[+] Searching for osu_set_raw_coords...");
+	auto cond_raw_coords = sed::pattern_scan_exec_region(nullptr, -1, "\x74\x00\x8b\x75\x00\x83\xc6", "x?xx?xx");
+	if (!cond_raw_coords)
+	{
+		DEBUG_PRINTF("\n[!] Failed to look for osu_set_raw_coords!");
+		return false;
+	}
+	DEBUG_PRINTF(" 0x%p", cond_raw_coords);
+
+	// Calculate relative
+	auto cond_raw_rel8 = *reinterpret_cast<std::uint8_t *>(cond_raw_coords + 1);
+	DEBUG_PRINTF("\n[+] raw coords rel8 and abs -> 0x%x", cond_raw_rel8);
+	// Calculate absolute from rel8
+	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
+	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
 	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
+	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_rebuilt)
+	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
