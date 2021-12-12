@@ -59,3 +59,7 @@ auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 auto features::relax::on_render() -> void
 {
 }
+
+auto features::relax::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
+{
+}

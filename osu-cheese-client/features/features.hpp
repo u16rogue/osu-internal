@@ -21,6 +21,11 @@ namespace features
 		{
 			(fts::on_render(), ...);
 		}
+
+		static auto on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
+		{
+			(fts::on_osu_set_raw_coords(raw_coords), ...);
+		}
 	};
 
 	using feature = _features_pack<

@@ -246,8 +246,11 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
-	DEBUG_PRINTF("\n[D] RAW -> %.0f, %.0f", raw_coords->x, raw_coords->y);
-	// *raw_coords = game::pp_pos_info->pos;
+	// TODO: actually rebuild this function from assembly
+	// but seems like there are other functions that does our
+	// job for us so we don't have to worry about it but it's
+	// a better idea to actually rebuild it and restore functionality
+	features::feature::on_osu_set_raw_coords(raw_coords);
 }
 
 static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
@@ -306,8 +309,8 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
-	//||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
-	//||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
+	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
+	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;

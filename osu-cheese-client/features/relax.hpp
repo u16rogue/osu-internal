@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include "../sdk/osu_vec.hpp"
 
 namespace features
 {
@@ -16,5 +17,6 @@ namespace features
 		static auto on_tab_render() -> void;
 		static auto on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool;
 		static auto on_render() -> void;
+		static auto on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void;
 	};
 }

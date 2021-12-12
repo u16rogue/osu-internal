@@ -50,3 +50,7 @@ auto features::esp::on_render() -> void
 	if (!esptxt.empty())
 		draw->AddText(ho->coords.field_to_view(), 0xFFFFFFFF, esptxt.c_str());
 }
+
+auto features::esp::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
+{
+}

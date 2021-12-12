@@ -94,3 +94,7 @@ auto features::aim_assist::on_render() -> void
 	}
 
 }
+
+auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
+{
+}
