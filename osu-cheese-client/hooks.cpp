@@ -33,13 +33,6 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	if (menu::wndproc(hWnd, Msg, wParam, lParam))
 		return true;
 
-	// HACK: tesing coord system, remove later!
-	if (variant == CallWindowProc_variant::KEY && Msg == WM_KEYDOWN && wParam == VK_NUMPAD0)
-	{
-		game::pp_pos_info->pos.x += 20.f;
-		DEBUG_PRINTF("\n[D] sent move!");
-	}
-
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
 		if (features::feature::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
@@ -253,9 +246,20 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 	}
 }
 
-static auto __stdcall osu_set_raw_coords_rebuilt() -> void
+static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
+	// DEBUG_PRINTF("\n[D] RAW -> %.0f, %.0f", raw_coords->x, raw_coords->y);
+	// *raw_coords = game::pp_pos_info->pos;
+}
 
+static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
+{
+	__asm
+	{
+		mov ecx, [ebp - 0x34]
+		add ecx, 0x24
+		jmp osu_set_raw_coords_rebuilt
+	};
 }
 
 auto hooks::install() -> bool
@@ -304,7 +308,7 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
-	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_rebuilt)
+	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
 	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
