@@ -237,9 +237,7 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 	{
 		push esi
 		sub esp, 8
-		//push esp
 		call osu_set_field_coords_rebuilt
-		//pop esp
 		add esp, 8
 		pop esi
 		ret 8
@@ -248,7 +246,7 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
-	// DEBUG_PRINTF("\n[D] RAW -> %.0f, %.0f", raw_coords->x, raw_coords->y);
+	DEBUG_PRINTF("\n[D] RAW -> %.0f, %.0f", raw_coords->x, raw_coords->y);
 	// *raw_coords = game::pp_pos_info->pos;
 }
 
@@ -296,7 +294,7 @@ auto hooks::install() -> bool
 	}
 	DEBUG_PRINTF(" 0x%p", cond_raw_coords);
 
-	// Calculate relative
+	// Get rel8
 	auto cond_raw_rel8 = *reinterpret_cast<std::uint8_t *>(cond_raw_coords + 1);
 	DEBUG_PRINTF("\n[+] raw coords rel8 and abs -> 0x%x", cond_raw_rel8);
 	// Calculate absolute from rel8
@@ -308,8 +306,8 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
 	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
-	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
-	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
+	//||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
+	//||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
