@@ -38,7 +38,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 {
 	static const sdk::hit_object * ho_filter = nullptr;
 
-	if (Msg == WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (Msg != WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
 	
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();
@@ -54,7 +54,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 			return false;
 	}
 
-	auto player_field_pos = game::pp_pos_info->pos;
+	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
 	auto dist_to_ho = player_field_pos.distance(ho->coords);
 
 	// Check fov
@@ -82,16 +82,14 @@ auto features::aim_assist::on_render() -> void
 	auto draw = ImGui::GetBackgroundDrawList();
 
 	if (vis_fov)
-		draw->AddCircle(game::pp_pos_info->pos, fov, 0xFFFFFFFF);
+		draw->AddCircle(game::pp_viewpos_info->pos, fov, 0xFFFFFFFF);
+
+	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	if (!ho)
+		return;
 
 	if (vis_safezonefov)
-	{
-		auto [ho, i] = manager::beatmap::get_coming_hitobject();
-		if (!ho)
-			return;
-
 		draw->AddCircle(ho->coords.field_to_view(), safezone, 0xFFFFFFFF);
-	}
 
 }
 

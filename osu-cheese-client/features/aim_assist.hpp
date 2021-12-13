@@ -7,14 +7,15 @@ namespace features
 {
 	class aim_assist
 	{
-		inline static bool  enable = false;
-		inline static float fov = 0.f;
-		inline static float safezone = 20.f;
-		inline static float strength = 20.f;
+		inline static bool  enable          = false;
+		inline static float fov             = 0.f;
+		inline static float safezone        = 20.f;
+		inline static float strength        = 20.f;
 		inline static float timeoffsetratio = 0.8f;
 
-		inline static bool vis_fov = false;
+		inline static bool vis_fov         = false;
 		inline static bool vis_safezonefov = false;
+		// inline static bool vis_aimassist   = false;
 
 	public:
 		aim_assist() = delete;

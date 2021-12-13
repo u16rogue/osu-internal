@@ -228,7 +228,7 @@ static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
 // rebuilt from assembly, due to clr being jitted this might get outdated soon!
 static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
 {
-	*out_coords = game::pp_pos_info->pos.view_to_field();
+	*out_coords = game::pp_viewpos_info->pos.view_to_field();
 }
 
 static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::vec2 * out_coords) -> void

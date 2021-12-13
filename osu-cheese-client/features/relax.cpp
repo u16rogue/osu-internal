@@ -29,7 +29,7 @@ auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 {
 	static const sdk::hit_object * filter_ho = nullptr;
 
-	if (Msg == WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (Msg != WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
 
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();
