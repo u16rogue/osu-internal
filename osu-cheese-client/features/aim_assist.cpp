@@ -36,42 +36,7 @@ auto features::aim_assist::on_tab_render() -> void
 
 auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool
 {
-	static const sdk::hit_object * ho_filter = nullptr;
-
-	if (Msg != WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
-		return false;
-	
-	auto [ho, i] = manager::beatmap::get_coming_hitobject();
-	if (!ho || ho == ho_filter)
-		return false;
-
-	// Check time offset
-	if (timeoffsetratio != 0.f && i != 0)
-	{
-		auto prev = ho - 1;
-		auto time_sub = ho->time - ((ho->time - prev->time) * (1.f - timeoffsetratio));
-		if (game::p_game_info->beat_time < time_sub)
-			return false;
-	}
-
-	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
-	auto dist_to_ho = player_field_pos.distance(ho->coords);
-
-	// Check fov
-	if (fov != 0.f && dist_to_ho > fov)
-		return false;
-
-	// Safezone override
-	if (safezone != 0.f && dist_to_ho <= safezone)
-	{
-		ho_filter = ho;
-		return false;
-	}
-	
-	POINT pscr = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
-	ClientToScreen(hWnd, &pscr);
-	SetCursorPos(pscr.x, pscr.y);
-	return true;
+	return false;
 }
 
 auto features::aim_assist::on_render() -> void
@@ -95,4 +60,40 @@ auto features::aim_assist::on_render() -> void
 
 auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
+	static const sdk::hit_object * ho_filter = nullptr;
+
+	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+		return;
+
+	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	if (!ho || ho == ho_filter)
+		return;
+
+	// Check time offset
+	if (timeoffsetratio != 0.f && i != 0)
+	{
+		auto prev = ho - 1;
+		auto time_sub = ho->time - ((ho->time - prev->time) * (1.f - timeoffsetratio));
+		if (game::p_game_info->beat_time < time_sub)
+			return;
+	}
+
+	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
+	auto dist_to_ho = player_field_pos.distance(ho->coords);
+
+	// Check fov
+	if (fov != 0.f && dist_to_ho > fov)
+		return;
+
+	// Safezone override
+	if (safezone != 0.f && dist_to_ho <= safezone)
+	{
+		ho_filter = ho;
+		return;
+	}
+
+	/*POINT pscr*/ *raw_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
+	//ClientToScreen(hWnd, &pscr);
+	//SetCursorPos(pscr.x, pscr.y);
+	return;
 }
