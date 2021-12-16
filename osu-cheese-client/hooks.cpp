@@ -154,11 +154,21 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 
 static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 {
-	auto beatmap = sed::str_starts_with(lpString, "osu!");
+	auto beatmap = sed::str_starts_with(lpString, L"osu!");
+	
 	if (!beatmap)
 		return;
 
-	beatmap = sed::str_starts_with(beatmap, "  - ");
+	// This is VERY ghetto, can't seem to find a good way to get the window handle without
+	// doing a different ghetto method, atleast with this we can ensure that we get the right
+	// window handle since this hook gets called everytime a beatmap is loaded and we only use
+	// the window handle when there is a beatmap loaded so there's not much to worry about!
+	// TODO: find a better way to obtain window handle!
+	//game::osu_wnd = hWnd;
+
+	DEBUG_PRINTF("\nBYE");
+
+	beatmap = sed::str_starts_with(beatmap, L"  - ");
 	if (!beatmap)
 	{
 		manager::beatmap::unload();
@@ -212,8 +222,6 @@ static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
 	}
 }
 
-
-
 static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
 {
 	if (!menu::visible)
@@ -224,10 +232,14 @@ static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
 }
 #endif
 
+#if 0
 // Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl ( very useful :))) !!! )
-// rebuilt from assembly, due to clr being jitted this might get outdated soon!
+// rebuilt from assembly, due to clr being jitted this might get outdated soon! (outdated!)
+// sig was too short, now fails to search, this is useless anyway since apparently "psilent"
+// isn't that used
 static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
 {
+	// Can do psilent here by setting the field coordinates
 	*out_coords = game::pp_viewpos_info->pos.view_to_field();
 }
 
@@ -243,6 +255,7 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 		ret 8
 	}
 }
+#endif
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
@@ -277,6 +290,7 @@ auto hooks::install() -> bool
 	}
 	DEBUG_PRINTF(" 0x%p", gdi32full_SwapBuffers_target);
 
+	#if 0
 	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
 	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xec\x00\x8b\xf2", "xxx?xx"));
@@ -286,10 +300,11 @@ auto hooks::install() -> bool
 		return false;
 	}
 	DEBUG_PRINTF(" 0x%p", osu_set_field_coords_target);
-	
+	#endif
+
 	// Set raw input coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_raw_coords...");
-	auto cond_raw_coords = sed::pattern_scan_exec_region(nullptr, -1, "\x74\x00\x8b\x75\x00\x83\xc6", "x?xx?xx");
+	auto cond_raw_coords = sed::pattern_scan_exec_region(nullptr, -1, "\x74\x00\x8b\x75\xCC\x83\xc6\x00\x8b\x45", "x?xx?xx?xx");
 	if (!cond_raw_coords)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_raw_coords!");
@@ -308,7 +323,7 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
-	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
+	// ||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
 	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
 	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {

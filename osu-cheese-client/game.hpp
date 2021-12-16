@@ -13,5 +13,7 @@ namespace game
 	inline sdk::unk_game_info_a  * p_game_info { nullptr };
 	inline bool                  * is_raw_input;
 
+	inline HWND                    osu_wnd { nullptr }; // See comment on SetWindowTextW hook
+
 	auto initialize() -> bool;
 }

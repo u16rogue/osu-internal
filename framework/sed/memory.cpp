@@ -83,9 +83,8 @@ auto sed::pattern_scan_exec_region(void * start_, std::size_t size, const char *
 			current += mbi.RegionSize;
 			continue;
 		}
-
-		auto match = sed::pattern_scan(current, mbi.RegionSize, pattern, mask);
-		if (match)
+		
+		if (auto match = sed::pattern_scan(current, mbi.RegionSize, pattern, mask); match)
 			return match;
 
 		current += mbi.RegionSize;

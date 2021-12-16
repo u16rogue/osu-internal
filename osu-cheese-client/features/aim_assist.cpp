@@ -92,8 +92,18 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		return;
 	}
 
-	/*POINT pscr*/ *raw_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
-	//ClientToScreen(hWnd, &pscr);
-	//SetCursorPos(pscr.x, pscr.y);
+	auto new_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
+
+	if (*game::is_raw_input)
+	{
+		*raw_coords = new_coords;
+	}
+	else
+	{
+		POINT pscr = new_coords;
+		ClientToScreen(game::osu_wnd, &pscr);
+		SetCursorPos(pscr.x, pscr.y);
+	}
+
 	return;
 }
