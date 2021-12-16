@@ -11,8 +11,5 @@ namespace sdk
 		OC_UNS_PAD(0x4, sdk::vec2, pos);
 	};
 
-	class pp_viewpos_info_t : public sed::basic_ptrptr<viewpos_info_t>
-	{
-	};
-
+	class pp_viewpos_info_t : public sed::basic_ptrptr<viewpos_info_t> {};
 }

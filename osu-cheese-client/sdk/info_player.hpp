@@ -14,7 +14,7 @@ namespace sdk
 		OC_UNS_PAD(0x182, bool, async_complete)
 	};
 
-	class ppinfo_player_t : public sed::basic_ptrptr<info_player_t>
+	class pp_info_player_t : public sed::basic_ptrptr<info_player_t>
 	{
 	};
 

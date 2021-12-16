@@ -164,7 +164,7 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	// window handle since this hook gets called everytime a beatmap is loaded and we only use
 	// the window handle when there is a beatmap loaded so there's not much to worry about!
 	// TODO: find a better way to obtain window handle!
-	//game::osu_wnd = hWnd;
+	game::osu_wnd = hWnd;
 
 	DEBUG_PRINTF("\nBYE");
 
@@ -323,7 +323,9 @@ auto hooks::install() -> bool
 	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
 	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
 	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
-	// ||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
+	#if 0
+	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
+	#endif
 	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
 	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
 	) {
