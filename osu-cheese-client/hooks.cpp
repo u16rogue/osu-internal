@@ -166,8 +166,6 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	// TODO: find a better way to obtain window handle!
 	game::osu_wnd = hWnd;
 
-	DEBUG_PRINTF("\nBYE");
-
 	beatmap = sed::str_starts_with(beatmap, L"  - ");
 	if (!beatmap)
 	{
