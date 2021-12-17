@@ -62,31 +62,31 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 	__asm__(
 	".intel_syntax noprefix   \n"
 	"	test al, al           \n"
-	"	jnz LBL_SKIP_ORIGINAL \n"
+	"	jnz LBL_CWP_SKIP_ORIGINAL \n"
 	"	pop eax               \n"
 	"   test al, al           \n"
-	"   jz LBL_VARIANT_A      \n"
+	"   jz LBL_CWP_VARIANT_A      \n"
 	);
 
 	// Call W variant
-	__asm__("LBL_VARIANT_W:");
+	__asm__("LBL_CWP_VARIANT_W:");
 	__asm lea eax, [CallWindowProcW + 5]
-	__asm__("jmp LBL_CALL_ORIGINAL");
+	__asm__("jmp LBL_CWP_CALL_ORIGINAL");
 
 	// Call A variant
-	__asm__("LBL_VARIANT_A:");
+	__asm__("LBL_CWP_VARIANT_A:");
 	__asm lea eax, [CallWindowProcA + 5]
-	__asm__("jmp LBL_CALL_ORIGINAL");
+	__asm__("jmp LBL_CWP_CALL_ORIGINAL");
 
 	// Call original
 	__asm__(
 	".intel_syntax noprefix \n"
-	"LBL_SKIP_ORIGINAL:     \n"
+	"LBL_CWP_SKIP_ORIGINAL:     \n"
 	"   pop eax             \n"
 	"	pop ebp             \n"
 	"   mov eax, 1          \n"
 	"	ret 0x14            \n"
-	"LBL_CALL_ORIGINAL:     \n"
+	"LBL_CWP_CALL_ORIGINAL:     \n"
 	// "	lea eax, [eax+5]    \n"
 	"	jmp eax             \n"
 	);
@@ -271,6 +271,56 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 	};
 }
 
+static volatile decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
+static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
+{
+	if (menu::visible && !game::pp_raw_mode_info->is_raw)
+	{
+		POINT p = menu::freeze_view_point;
+		ClientToScreen(game::pp_wnd_info->handle, &p);
+		*lpPoint = p;
+		return true;
+	}
+
+	return false;
+}
+
+static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
+{
+	__asm
+	{
+		push ebp
+		mov ebp, esp
+
+		push [ebp + 0x8]
+		call GetCursorPos_hook
+	}
+
+	__asm__(
+	".intel_syntax noprefix             \n"
+	"test al, al                        \n"
+	"jz LBL_GETCURSORPOS_CALL_ORIGINAL \n"
+	);
+
+	// Skip original and fake return
+	__asm__(
+	".intel_syntax noprefix          \n"
+	"LBL_GETCURSORPOS_SKIP_ORIGINAL: \n"
+	// "mov eax, 1                      \n" unecessary since our hook will be setting the eax (or al) register to 1 anyway
+	"pop ebp                         \n"
+	"ret 4                           \n"
+	);
+	
+	// Call original
+	__asm__("LBL_GETCURSORPOS_CALL_ORIGINAL:");
+	__asm mov eax, GetCursorPos_target;
+	__asm__(
+	".intel_syntax noprefix \n"
+	"lea eax, [eax + 0x5]   \n"
+	"jmp eax                \n"
+	);
+}
+
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
@@ -323,6 +373,7 @@ auto hooks::install() -> bool
 	#endif
 	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
 	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
+	||  !sed::jmprel32_apply(GetCursorPos, GetCursorPos_proxy)
 	) {
 		DEBUG_PRINTF("\n[!] Failed to install hooks!");
 		return false;
