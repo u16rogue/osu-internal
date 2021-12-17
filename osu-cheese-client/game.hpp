@@ -6,6 +6,7 @@
 #include "sdk/info_struct.hpp"
 #include "sdk/position_info.hpp"
 #include "sdk/raw_info.hpp"
+#include "sdk/wnd_info.hpp"
 
 namespace game
 {
@@ -13,8 +14,7 @@ namespace game
 	inline sdk::pp_viewpos_info_t  pp_viewpos_info;
 	inline sdk::unk_game_info_a  * p_game_info { nullptr };
 	inline sdk::pp_raw_mode_info_t pp_raw_mode_info;
-
-	inline HWND                    osu_wnd { nullptr }; // See comment on SetWindowTextW hook
+	inline sdk::pp_wnd_info_t      pp_wnd_info;
 
 	auto initialize() -> bool;
 }

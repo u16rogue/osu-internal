@@ -31,7 +31,7 @@ add_library(osu-cheese-client SHARED
 	"features/features.hpp"
 	"sdk/position_info.hpp"
 	"sdk/raw_info.hpp"
-)
+ "sdk/wnd_info.hpp")
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
 

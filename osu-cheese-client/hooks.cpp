@@ -159,13 +159,6 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	if (!beatmap)
 		return;
 
-	// This is VERY ghetto, can't seem to find a good way to get the window handle without
-	// doing a different ghetto method, atleast with this we can ensure that we get the right
-	// window handle since this hook gets called everytime a beatmap is loaded and we only use
-	// the window handle when there is a beatmap loaded so there's not much to worry about!
-	// TODO: find a better way to obtain window handle!
-	game::osu_wnd = hWnd;
-
 	beatmap = sed::str_starts_with(beatmap, L"  - ");
 	if (!beatmap)
 	{

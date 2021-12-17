@@ -99,7 +99,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (!game::pp_raw_mode_info->is_raw)
 	{
 		POINT pscr = new_coords;
-		ClientToScreen(game::osu_wnd, &pscr);
+		ClientToScreen(game::pp_wnd_info->handle, &pscr);
 		SetCursorPos(pscr.x, pscr.y);
 	}
 
