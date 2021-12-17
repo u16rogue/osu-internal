@@ -35,15 +35,13 @@ auto menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 		ShowCursor(menu::visible);
 
 		if (menu::visible)
-		{
 			menu::freeze_view_point = game::pp_viewpos_info->pos;
 
-			if (game::pp_raw_mode_info->is_raw)
-			{
-				POINT p = menu::freeze_view_point;
-				ClientToScreen(game::pp_wnd_info->handle, &p);
-				SetCursorPos(p.x, p.y);
-			}
+		if (menu::visible && game::pp_raw_mode_info->is_raw || !menu::visible)
+		{
+			POINT p = menu::freeze_view_point;
+			ClientToScreen(game::pp_wnd_info->handle, &p);
+			SetCursorPos(p.x, p.y);
 		}
 
 		return true;

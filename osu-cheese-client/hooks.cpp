@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <windowsx.h>
+#include <tuple>
 #include <sed/macro.hpp>
 #include <sed/memory.hpp>
 #include <sed/strings.hpp>
@@ -274,7 +275,31 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 static volatile decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
 static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 {
-	if (menu::visible && !game::pp_raw_mode_info->is_raw)
+	static void * wnform_start, * wnform_end;
+	if (!wnform_start || !wnform_end)
+	{
+		HMODULE hmod = GetModuleHandleW(L"System.Windows.Forms.ni.dll");
+		MODULEINFO mi {};
+
+		if (!hmod || !GetModuleInformation(GetCurrentProcess(), hmod, &mi, sizeof(mi))) // TODO: handle this properly
+			TerminateProcess(GetCurrentProcess(), 1);
+
+		wnform_start = mi.lpBaseOfDll;
+		wnform_end = reinterpret_cast<void *>(std::uintptr_t(mi.lpBaseOfDll) + mi.SizeOfImage);
+	}
+
+	void * real_return_address { nullptr };
+
+	__asm
+	{
+		push eax
+		mov eax, [ebp]
+		mov eax, [eax + 4]
+		mov real_return_address, eax
+		pop eax
+	};
+	
+	if (real_return_address >= wnform_start && real_return_address <= wnform_end && menu::visible)
 	{
 		POINT p = menu::freeze_view_point;
 		ClientToScreen(game::pp_wnd_info->handle, &p);
