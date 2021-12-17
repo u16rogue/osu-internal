@@ -4,6 +4,7 @@
 #include <imgui_impl_win32.h>
 #include <sed/macro.hpp>
 
+#include "game.hpp"
 #include "features/features.hpp"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -32,6 +33,19 @@ auto menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 	{
 		menu::visible = !menu::visible;
 		ShowCursor(menu::visible);
+
+		if (menu::visible)
+		{
+			menu::freeze_view_point = game::pp_viewpos_info->pos;
+
+			if (game::pp_raw_mode_info->is_raw)
+			{
+				POINT p = menu::freeze_view_point;
+				ClientToScreen(game::pp_wnd_info->handle, &p);
+				SetCursorPos(p.x, p.y);
+			}
+		}
+
 		return true;
 	}
 	
