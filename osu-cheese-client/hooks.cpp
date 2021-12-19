@@ -406,3 +406,8 @@ auto hooks::install() -> bool
 	
 	return true;
 }
+
+auto hooks::uninstall() -> bool
+{
+	return false;
+}

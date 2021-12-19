@@ -8,6 +8,8 @@ add_library(osu-cheese-framework STATIC
 	"sed/windows/smart_handle.cpp"
 	"sed/windows/suspend_guard.hpp"
 	"sed/windows/suspend_guard.cpp"
+	"sed/windows/protect_guard.hpp"
+	"sed/windows/protect_guard.cpp"
 
 	"sed/console.hpp"
 	"sed/console.cpp"
