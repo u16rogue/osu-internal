@@ -9,7 +9,7 @@
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-auto menu::render() -> void
+auto oc::menu::render() -> void
 {
 	if (!menu::visible)
 		return;
@@ -27,7 +27,7 @@ auto menu::render() -> void
 	ImGui::End();
 }
 
-auto menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
+auto oc::menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
 	if (Msg == WM_KEYDOWN && wParam == VK_PAUSE)
 	{

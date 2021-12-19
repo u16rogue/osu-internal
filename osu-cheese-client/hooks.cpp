@@ -31,7 +31,7 @@ enum class CallWindowProc_variant : int
 
 static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> bool
 {
-	if (menu::wndproc(hWnd, Msg, wParam, lParam))
+	if (oc::menu::wndproc(hWnd, Msg, wParam, lParam))
 		return true;
 
 	if (variant == CallWindowProc_variant::MOUSE)
@@ -130,7 +130,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui::NewFrame();
 
 	features::feature::on_render();
-	menu::render();
+	oc::menu::render();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -252,8 +252,8 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
-	if (menu::visible && game::pp_raw_mode_info->is_raw)
-		*raw_coords = menu::freeze_view_point;
+	if (oc::menu::visible && game::pp_raw_mode_info->is_raw)
+		*raw_coords = oc::menu::freeze_view_point;
 
 	// TODO: actually rebuild this function from assembly
 	// but seems like there are other functions that does our
@@ -299,9 +299,9 @@ static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 		pop eax
 	};
 	
-	if (real_return_address >= wnform_start && real_return_address <= wnform_end && menu::visible)
+	if (real_return_address >= wnform_start && real_return_address <= wnform_end && oc::menu::visible)
 	{
-		POINT p = menu::freeze_view_point;
+		POINT p = oc::menu::freeze_view_point;
 		ClientToScreen(game::pp_wnd_info->handle, &p);
 		*lpPoint = p;
 		return true;
@@ -324,7 +324,7 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 	__asm__(
 	".intel_syntax noprefix             \n"
 	"test al, al                        \n"
-	"jz LBL_GETCURSORPOS_CALL_ORIGINAL \n"
+	"jz LBL_GETCURSORPOS_CALL_ORIGINAL  \n"
 	);
 
 	// Skip original and fake return

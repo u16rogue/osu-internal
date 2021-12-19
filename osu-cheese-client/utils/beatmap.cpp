@@ -78,7 +78,6 @@ static auto beatmap_next_object(char *& buffer, char * end) -> bool
 // WARNING: only used for parsing HitObjects, not meant for anything else
 static auto beatmap_parse_item(char *& buffer, char * end, int & out_value) -> bool
 {
-	// TODO: implement this better
 	for (; buffer < end; ++buffer)
 	{
 		if (*buffer < '0' || *buffer > '9')
