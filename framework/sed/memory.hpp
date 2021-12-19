@@ -21,49 +21,79 @@ namespace sed
 	class mempatch_interface
 	{
 	public:
+		virtual bool patch() = 0;
 		virtual bool restore() = 0;
+		virtual operator bool() const noexcept = 0;
 	};
 
 	template <std::size_t size = 0>
 	class mempatch : public mempatch_interface
 	{
 	public:
-		mempatch();
-		
-		bool patch(void * address_, std::uint8_t * bytes)
+
+	};
+
+	template <std::uint8_t opcode>
+	class basic_mempatch_op1r32 : public mempatch_interface
+	{
+	public:
+		basic_mempatch_op1r32(void * from, void * to)
+			: from(from), to(to) {}
+
+		bool patch() override
 		{
-			auto prot = sed::protect_guard(address_, size);
+			auto prot = sed::protect_guard(this->from, 0x5);
 			if (!prot)
 				return false;
 
-			this->address = address_;
+			// backup
+			std::memcpy(this->restore_buffer, this->from, 0x5);
 
-			std::memcpy(this->restore_buffer, address_, size);
-			std::memcpy(address_, bytes, size);
+			// patch
+			std::uint8_t shell[] = { opcode, 0x00, 0x00, 0x00, 0x00 };
+			*reinterpret_cast<std::uintptr_t *>(shell + 1) = sed::abs2rel32(this->from, sizeof(shell), this->to);
+			std::memcpy(this->from, shell, sizeof(shell));
 
+			this->patched = true;
 			return true;
 		}
 
 		bool restore() override
 		{
-			if (!this->address)
-				return true; // skip if no patch
+			if (!this->patched)
+				return true;
 
-			auto prot = sed::protect_guard(this->address, size);
+			auto prot = sed::protect_guard(this->from, 0x5);
 			if (!prot)
 				return false;
 
-			std::memcpy(this->address, this->restore_buffer, size);
+			std::memcpy(this->from, this->restore_buffer, 0x5);
+			this->patched = false;
 			return true;
 		}
 
-	private:
-		void * address { nullptr };
-		std::uint8_t restore_buffer[size] { 0x0 };
+		operator bool() const noexcept override
+		{
+			return this->patched;
+		}
 
 	private:
-		inline static std::vector<std::unique_ptr<mempatch_interface>> instances;
+		bool   patched { false   };
+		void * from    { nullptr },
+			 * to      { nullptr };
+
+		std::uint8_t restore_buffer[5] { 0x00 };
+
+	public:
+		static auto make(void * from, void * to) -> mempatch_interface *// std::unique_ptr<mempatch_interface>
+		{
+			return new basic_mempatch_op1r32<opcode>(from, to); //std::move(std::make_unique<basic_mempatch_op1r32<opcode>>(from, to));
+		}
+
 	};
+
+	using mempatch_jmpr32  = basic_mempatch_op1r32<0xE9>;
+	using mempatch_callr32 = basic_mempatch_op1r32<0xE8>; 
 
 	// TODO: consteval ida style pattern generator
 	auto pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;

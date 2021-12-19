@@ -6,6 +6,7 @@
 
 #include "game.hpp"
 #include "features/features.hpp"
+#include "oc_client.hpp"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
@@ -17,6 +18,11 @@ auto oc::menu::render() -> void
 	ImGui::SetNextWindowSize(ImVec2(660.f, 460.f), ImGuiCond_FirstUseEver);
 
 	ImGui::Begin("osu!");
+
+	if (ImGui::Button("Unload"))
+		CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr);
+
+	ImGui::SameLine();
 	ImGui::Text("[PAUSE] Key to toggle menu.");
 
 	if (ImGui::BeginTabBar("##oc_tabs"))

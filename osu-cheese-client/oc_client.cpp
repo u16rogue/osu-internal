@@ -4,6 +4,7 @@
 #include <sed/console.hpp>
 #include "game.hpp"
 #include "hooks.hpp"
+#include "menu.hpp"
 
 auto oc::load() -> bool
 {
@@ -24,5 +25,7 @@ auto oc::load() -> bool
 
 auto oc::unload() -> bool
 {
-	return false;
+	hooks::uninstall();
+	DEBUG_PRINTF("\n[!] Unloaded!");
+	return true;
 }

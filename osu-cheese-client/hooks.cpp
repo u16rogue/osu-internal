@@ -346,6 +346,9 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 	);
 }
 
+using hook_instances_t = std::vector<sed::mempatch_interface *>;
+static hook_instances_t hook_instances;
+
 auto hooks::install() -> bool
 {
 	DEBUG_PRINTF("\n[+] Installing hooks..."
@@ -389,25 +392,47 @@ auto hooks::install() -> bool
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
-	if (!sed::jmprel32_apply(CallWindowProcA, CallWindowProcA_proxy)
-	||  !sed::jmprel32_apply(CallWindowProcW, CallWindowProcW_proxy)
-	||  !sed::jmprel32_apply(SetWindowTextW, SetWindowTextW_proxy)
-	||  !sed::jmprel32_apply(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy)
-	#if 0
-	||  !sed::jmprel32_apply(osu_set_field_coords_target, osu_set_field_coords_proxy)
-	#endif
-	||  !sed::callrel32_apply(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy)
-	||  !sed::jmprel32_apply(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs))
-	||  !sed::jmprel32_apply(GetCursorPos, GetCursorPos_proxy)
-	) {
-		DEBUG_PRINTF("\n[!] Failed to install hooks!");
-		return false;
+	hook_instances_t _instances =
+	{
+		sed::mempatch_jmpr32::make(CallWindowProcA, CallWindowProcA_proxy),
+		sed::mempatch_jmpr32::make(CallWindowProcW, CallWindowProcW_proxy),
+		sed::mempatch_jmpr32::make(SetWindowTextW, SetWindowTextW_proxy),
+		sed::mempatch_jmpr32::make(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy),
+		sed::mempatch_callr32::make(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy),
+		sed::mempatch_jmpr32::make(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs)),
+		sed::mempatch_jmpr32::make(GetCursorPos, GetCursorPos_proxy)
+	};
+
+	for (auto * h : _instances)
+	{
+		if (!h->patch())
+		{
+			DEBUG_PRINTF("\n[!] Failed to install hooks!");
+			return false;
+		}
 	}
 	
+	hook_instances = std::move(_instances);
+
 	return true;
 }
 
 auto hooks::uninstall() -> bool
 {
-	return false;
+	if (hook_instances.empty())
+		return false;
+
+	for (auto * h : hook_instances)
+	{
+		if (!h->restore())
+		{
+			DEBUG_PRINTF("\n[!] Failed to uninstall hook!");
+			continue;
+		}
+
+		delete h;
+	}
+
+	hook_instances.clear();
+	return true;
 }
