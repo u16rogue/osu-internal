@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <Psapi.h>
 #include <memory>
+#include "windows/protect_guard.hpp"
 
 namespace sed
 {
@@ -31,23 +32,29 @@ namespace sed
 		
 		bool patch(void * address_, std::uint8_t * bytes)
 		{
-			this->address = address_;
-			DWORD oprot { 0 };
-			if (!VirtualProtect(address_, size, PAGE_EXECUTE_READWRITE, &oprot))
+			auto prot = sed::protect_guard(address_, size);
+			if (!prot)
 				return false;
+
+			this->address = address_;
 
 			std::memcpy(this->restore_buffer, address_, size);
 			std::memcpy(address_, bytes, size);
-
-			if (!VirtualProtect(address_, size, oprot, &oprot))
-				return false;
 
 			return true;
 		}
 
 		bool restore() override
 		{
+			if (!this->address)
+				return true; // skip if no patch
 
+			auto prot = sed::protect_guard(this->address, size);
+			if (!prot)
+				return false;
+
+			std::memcpy(this->address, this->restore_buffer, size);
+			return true;
 		}
 
 	private:
