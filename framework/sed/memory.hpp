@@ -26,13 +26,6 @@ namespace sed
 		virtual operator bool() const noexcept = 0;
 	};
 
-	template <std::size_t size = 0>
-	class mempatch : public mempatch_interface
-	{
-	public:
-
-	};
-
 	template <std::uint8_t opcode>
 	class basic_mempatch_op1r32 : public mempatch_interface
 	{
@@ -83,13 +76,6 @@ namespace sed
 			 * to      { nullptr };
 
 		std::uint8_t restore_buffer[5] { 0x00 };
-
-	public:
-		static auto make(void * from, void * to) -> mempatch_interface *// std::unique_ptr<mempatch_interface>
-		{
-			return new basic_mempatch_op1r32<opcode>(from, to); //std::move(std::make_unique<basic_mempatch_op1r32<opcode>>(from, to));
-		}
-
 	};
 
 	using mempatch_jmpr32  = basic_mempatch_op1r32<0xE9>;

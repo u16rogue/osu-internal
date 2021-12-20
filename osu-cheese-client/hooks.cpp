@@ -346,7 +346,7 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 	);
 }
 
-using hook_instances_t = std::vector<sed::mempatch_interface *>;
+using hook_instances_t = std::vector<std::unique_ptr<sed::mempatch_interface>>;
 static hook_instances_t hook_instances;
 
 auto hooks::install() -> bool
@@ -392,18 +392,22 @@ auto hooks::install() -> bool
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
-	hook_instances_t _instances =
-	{
-		sed::mempatch_jmpr32::make(CallWindowProcA, CallWindowProcA_proxy),
-		sed::mempatch_jmpr32::make(CallWindowProcW, CallWindowProcW_proxy),
-		sed::mempatch_jmpr32::make(SetWindowTextW, SetWindowTextW_proxy),
-		sed::mempatch_jmpr32::make(gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy),
-		sed::mempatch_callr32::make(reinterpret_cast<void *>(cond_raw_coords), osu_set_raw_coords_proxy),
-		sed::mempatch_jmpr32::make(reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs)),
-		sed::mempatch_jmpr32::make(GetCursorPos, GetCursorPos_proxy)
-	};
+	#define _OC_ADD_HOOK_INSTANCE(patchtype, ...) \
+		_instances.push_back(std::make_unique<sed::mempatch_##patchtype##r32>(__VA_ARGS__))
+	
+	hook_instances_t _instances;
 
-	for (auto * h : _instances)
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA,                               CallWindowProcA_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW,                               CallWindowProcW_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,                                SetWindowTextW_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  gdi32full_SwapBuffers_target,                  gdi32full_SwapBuffers_proxy);
+	_OC_ADD_HOOK_INSTANCE(call, reinterpret_cast<void *>(cond_raw_coords),     osu_set_raw_coords_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs));
+	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                                  GetCursorPos_proxy);
+
+	#undef _OC_ADD_HOOK_INSTANCE
+
+	for (auto & h : _instances)
 	{
 		if (!h->patch())
 		{
@@ -413,7 +417,6 @@ auto hooks::install() -> bool
 	}
 	
 	hook_instances = std::move(_instances);
-
 	return true;
 }
 
@@ -422,15 +425,12 @@ auto hooks::uninstall() -> bool
 	if (hook_instances.empty())
 		return false;
 
-	for (auto * h : hook_instances)
+	for (auto & h : hook_instances)
 	{
 		if (!h->restore())
 		{
 			DEBUG_PRINTF("\n[!] Failed to uninstall hook!");
-			continue;
 		}
-
-		delete h;
 	}
 
 	hook_instances.clear();
