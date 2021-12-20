@@ -336,7 +336,7 @@ auto hooks::install() -> bool
 
 	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
-	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04", "xxxxxxxxxxxxxx"));
+	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04\xd9\x44", "xxx?xxxx?xxxx?xx"));
 	if (!osu_set_field_coords_target)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_field_coords!");
