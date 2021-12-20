@@ -201,35 +201,7 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 	}
 }
 
-#if 0
-static volatile decltype(ShowCursor) * ShowCursor_target = ShowCursor;
-static auto __attribute__((naked)) ShowCursor_trampoline(BOOL bShow) -> int
-{
-	_asm
-	{
-		push ebp
-		mov ebp, esp
-		mov eax, ShowCursor_target
-		lea eax, [eax+5]
-		jmp eax
-	}
-}
-
-static auto WINAPI ShowCursor_hook(BOOL bShow) -> int
-{
-	if (!menu::visible)
-		return ShowCursor_trampoline(bShow);
-
-	menu::last_show_cursor_request = bShow;
-	return bShow ? 0 : -1;
-}
-#endif
-
-#if 0
-// Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl ( very useful :))) !!! )
-// rebuilt from assembly, due to clr being jitted this might get outdated soon! (outdated!)
-// sig was too short, now fails to search, this is useless anyway since apparently "psilent"
-// isn't that used
+// Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl
 static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
 {
 	// Can do psilent here by setting the field coordinates
@@ -248,7 +220,6 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 		ret 8
 	}
 }
-#endif
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
@@ -363,17 +334,15 @@ auto hooks::install() -> bool
 	}
 	DEBUG_PRINTF(" 0x%p", gdi32full_SwapBuffers_target);
 
-	#if 0
 	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
-	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xec\x00\x8b\xf2", "xxx?xx"));
+	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04", "xxxxxxxxxxxxxx"));
 	if (!osu_set_field_coords_target)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_field_coords!");
 		return false;
 	}
 	DEBUG_PRINTF(" 0x%p", osu_set_field_coords_target);
-	#endif
 
 	// Set raw input coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_raw_coords...");
@@ -401,6 +370,7 @@ auto hooks::install() -> bool
 	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW,                               CallWindowProcW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,                                SetWindowTextW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  gdi32full_SwapBuffers_target,                  gdi32full_SwapBuffers_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  osu_set_field_coords_target,                   osu_set_field_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(call, reinterpret_cast<void *>(cond_raw_coords),     osu_set_raw_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs));
 	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                                  GetCursorPos_proxy);
