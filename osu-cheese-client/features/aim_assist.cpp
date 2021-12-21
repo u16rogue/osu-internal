@@ -41,6 +41,10 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 
 auto features::aim_assist::on_render() -> void
 {
+	// HACK: Visualize player direction DEBUG CODE! REMOVE!
+	auto _draw = ImGui::GetBackgroundDrawList();
+	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
+
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
 
@@ -61,6 +65,9 @@ auto features::aim_assist::on_render() -> void
 auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
 	static const sdk::hit_object * ho_filter = nullptr;
+
+	player_direction = last_tick_point.normalize(*raw_coords);
+	last_tick_point  = *raw_coords;
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;

@@ -13,6 +13,9 @@ namespace features
 		inline static float strength        = 4.f;
 		inline static float timeoffsetratio = 0.8f;
 
+		inline static sdk::vec2 last_tick_point  {};
+		inline static sdk::vec2 player_direction {};
+
 		inline static bool vis_fov         = false;
 		inline static bool vis_safezonefov = false;
 		// inline static bool vis_aimassist   = false;
