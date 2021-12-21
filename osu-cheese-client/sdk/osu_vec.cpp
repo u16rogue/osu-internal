@@ -76,6 +76,11 @@ auto sdk::vec2::operator+(const vec2 & rhs) const noexcept -> vec2
 	return vec2(this->x + rhs.x, this->y + rhs.y);
 }
 
+auto sdk::vec2::operator+(const float rhs) const noexcept -> vec2
+{
+	return vec2(this->x + rhs, this->y + rhs);
+}
+
 sdk::vec2::operator ImVec2() const
 {
 	return ImVec2(this->x, this->y);

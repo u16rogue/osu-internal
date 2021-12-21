@@ -9,6 +9,30 @@
 #include "../manager/gamefield_manager.hpp"
 #include "../manager/beatmap_manager.hpp"
 
+#if 0
+auto features::aim_assist::get_velocity() -> float
+{
+	int   sample_count { 0 };
+	float result      { 0.f };
+
+	auto tick = GetTickCount();
+
+	for (const auto & v : move_samples)
+	{
+		if (v.tick < tick)
+			continue;
+
+		++sample_count;
+		//result += v.
+	}
+
+	return 0.0f;
+}
+
+auto features::aim_assist::push_sample(sdk::vec2 & pos) -> void
+{
+}
+#endif
 
 auto features::aim_assist::on_tab_render() -> void
 {
@@ -41,9 +65,13 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 
 auto features::aim_assist::on_render() -> void
 {
-	// HACK: Visualize player direction DEBUG CODE! REMOVE!
+	// HACK: DEBUG CODE! REMOVE!
 	auto _draw = ImGui::GetBackgroundDrawList();
+	// Visualize player direction
 	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
+	// Velocity
+	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, ("Sampling velocity: " + std::to_string(velocity)).c_str());
+	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, ("Sampling velocity: " + std::to_string(velocity)).c_str());
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
@@ -66,8 +94,14 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
 	static const sdk::hit_object * ho_filter = nullptr;
 
-	player_direction = last_tick_point.normalize(*raw_coords);
-	last_tick_point  = *raw_coords;
+	if (auto _velocity = last_tick_point.distance(*raw_coords); _velocity != 0.f)
+	{
+		velocity = _velocity;
+		DEBUG_PRINTF("\n[D] velocity: %f", velocity);
+		
+		player_direction = last_tick_point.normalize(*raw_coords);
+		last_tick_point = *raw_coords;
+	}
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;

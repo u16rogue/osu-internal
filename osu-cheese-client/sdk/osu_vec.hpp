@@ -39,6 +39,7 @@ namespace sdk
 		auto operator ==(const vec2 & rhs) const noexcept -> bool;
 		auto operator *(const float rhs) const noexcept -> vec2;
 		auto operator +(const vec2 & rhs) const noexcept -> vec2;
+		auto operator +(const float rhs) const noexcept -> vec2;
 
 		operator ImVec2() const;
 		operator POINT() const;
