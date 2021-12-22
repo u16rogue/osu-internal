@@ -2,8 +2,6 @@
 
 #include <cstdint>
 #include <Windows.h>
-#include <cmath>
-#include <numbers>
 
 #include "../manager/gamefield_manager.hpp"
 
@@ -59,6 +57,21 @@ auto sdk::vec2::forward(const vec2 & to, float fwd_distance) const -> vec2
 auto sdk::vec2::range(const vec2 & to, float field) const -> rangestat
 {
 	return this->distance(to) <= field ? rangestat::INSIDE : rangestat::OUTSIDE;
+}
+
+auto sdk::vec2::norm2rad2deg() -> float
+{
+	return std::atan2f(this->y, this->x) * 180.f / std::numbers::pi_v<float>;
+}
+
+auto sdk::vec2::from_rad(float rad) -> vec2
+{
+	return vec2(std::cosf(rad), std::sinf(rad));
+}
+
+auto sdk::vec2::from_deg(float deg) -> vec2
+{
+	return vec2::from_rad(deg * std::numbers::pi_v<float> / 180.f);
 }
 
 auto sdk::vec2::operator==(const vec2 & rhs) const noexcept -> bool

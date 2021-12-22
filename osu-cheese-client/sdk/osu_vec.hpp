@@ -2,6 +2,8 @@
 
 #include <imgui.h>
 #include <Windows.h>
+#include <cmath>
+#include <numbers>
 
 namespace sdk
 {
@@ -35,6 +37,11 @@ namespace sdk
 		auto forward(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
 
 		auto range(const vec2 & to, float field) const -> rangestat;
+
+		auto norm2rad2deg() -> float; // lol
+
+		static auto from_rad(float rad) -> vec2;
+		static auto from_deg(float deg) -> vec2;
 
 		auto operator ==(const vec2 & rhs) const noexcept -> bool;
 		auto operator *(const float rhs) const noexcept -> vec2;

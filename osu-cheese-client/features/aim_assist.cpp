@@ -70,8 +70,20 @@ auto features::aim_assist::on_render() -> void
 	// Visualize player direction
 	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
 	// Velocity
-	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, ("Sampling velocity: " + std::to_string(velocity)).c_str());
-	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, ("Sampling velocity: " + std::to_string(velocity)).c_str());
+	std::string _dbg_txt_info = "Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(player_direction.norm2rad2deg());
+	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, _dbg_txt_info.c_str());
+	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, _dbg_txt_info.c_str());
+	// Test angles
+	auto _sp = sdk::vec2(200, 200);
+	static int _ap = 0.f;
+	_draw->AddText(_sp, 0xFFFFFFFF, std::to_string(_ap).c_str());
+	_draw->AddLine(_sp, _sp + (sdk::vec2::from_deg(float(_ap)) * 80.f), 0xFFFFFFFF, 4.f);
+	
+	if (GetAsyncKeyState(VK_NUMPAD0) & 0x1)
+	{
+		_ap += 20;
+		_ap = _ap % 360;
+	}
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
@@ -97,8 +109,6 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (auto _velocity = last_tick_point.distance(*raw_coords); _velocity != 0.f)
 	{
 		velocity = _velocity;
-		DEBUG_PRINTF("\n[D] velocity: %f", velocity);
-		
 		player_direction = last_tick_point.normalize(*raw_coords);
 		last_tick_point = *raw_coords;
 	}
