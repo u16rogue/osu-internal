@@ -34,7 +34,7 @@ namespace sdk
 		static auto field_to_view(vec2 & v) -> void;
 		
 		auto normalize(const vec2 & to) const -> vec2;
-		auto forward(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
+		auto forward_towards(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
 
 		auto range(const vec2 & to, float field) const -> rangestat;
 

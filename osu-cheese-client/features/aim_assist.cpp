@@ -73,17 +73,17 @@ auto features::aim_assist::on_render() -> void
 	std::string _dbg_txt_info = "Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(player_direction.norm2rad2deg());
 	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, _dbg_txt_info.c_str());
 	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, _dbg_txt_info.c_str());
-	// Test angles
-	auto _sp = sdk::vec2(200, 200);
-	static int _ap = 0.f;
-	_draw->AddText(_sp, 0xFFFFFFFF, std::to_string(_ap).c_str());
-	_draw->AddLine(_sp, _sp + (sdk::vec2::from_deg(float(_ap)) * 80.f), 0xFFFFFFFF, 4.f);
-	
-	if (GetAsyncKeyState(VK_NUMPAD0) & 0x1)
-	{
-		_ap += 20;
-		_ap = _ap % 360;
-	}
+	// Visualize directional FOV
+	float cur_ang = player_direction.norm2rad2deg();
+	float min_b_ang = cur_ang - dir_fov;
+	float max_b_ang = cur_ang + dir_fov;
+	auto min_dir = sdk::vec2::from_deg(min_b_ang);
+	auto max_dir = sdk::vec2::from_deg(max_b_ang);
+	auto min_point = min_dir * 80.f;
+	auto max_point = max_dir * 80.f;
+
+	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + min_point, 0xFFFFFFFF, 4.f);
+	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + max_point, 0xFFFFFFFF, 4.f);
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
@@ -143,7 +143,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		return;
 	}
 
-	auto new_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
+	auto new_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward_towards(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
 
 	*raw_coords = new_coords;
 

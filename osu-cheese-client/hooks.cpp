@@ -82,12 +82,12 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 	// Call original
 	__asm__(
 	".intel_syntax noprefix \n"
-	"LBL_CWP_SKIP_ORIGINAL:     \n"
+	"LBL_CWP_SKIP_ORIGINAL: \n"
 	"   pop eax             \n"
 	"	pop ebp             \n"
 	"   mov eax, 1          \n"
 	"	ret 0x14            \n"
-	"LBL_CWP_CALL_ORIGINAL:     \n"
+	"LBL_CWP_CALL_ORIGINAL: \n"
 	// "	lea eax, [eax+5]    \n"
 	"	jmp eax             \n"
 	);

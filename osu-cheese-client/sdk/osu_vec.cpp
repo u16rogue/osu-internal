@@ -45,7 +45,7 @@ auto sdk::vec2::normalize(const vec2 & to) const -> vec2
 	);
 }
 
-auto sdk::vec2::forward(const vec2 & to, float fwd_distance) const -> vec2
+auto sdk::vec2::forward_towards(const vec2 & to, float fwd_distance) const -> vec2
 {
 	auto norm = this->normalize(to);
 	return vec2(

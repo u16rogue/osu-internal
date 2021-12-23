@@ -11,6 +11,7 @@ namespace features
 		
 		inline static bool  enable          = false;
 		inline static float fov             = 0.f;
+		inline static float dir_fov         = 8.f;
 		inline static float safezone        = 20.f;
 		inline static float strength        = 4.f;
 		inline static float timeoffsetratio = 0.8f;
