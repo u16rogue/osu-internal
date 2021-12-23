@@ -36,7 +36,7 @@ auto sdk::vec2::field_to_view(vec2 & v) -> void
 	v.y = v.y * manager::game_field::field_ratio + manager::game_field::offset_y;
 }
 
-auto sdk::vec2::normalize(const vec2 & to) const -> vec2
+auto sdk::vec2::normalize_towards(const vec2 & to) const -> vec2
 {
 	auto dist = this->distance(to);
 	return vec2(
@@ -47,19 +47,14 @@ auto sdk::vec2::normalize(const vec2 & to) const -> vec2
 
 auto sdk::vec2::forward_towards(const vec2 & to, float fwd_distance) const -> vec2
 {
-	auto norm = this->normalize(to);
+	auto norm = this->normalize_towards(to);
 	return vec2(
 		this->x + fwd_distance * norm.x,
 		this->y + fwd_distance * norm.y
 	);
 }
 
-auto sdk::vec2::range(const vec2 & to, float field) const -> rangestat
-{
-	return this->distance(to) <= field ? rangestat::INSIDE : rangestat::OUTSIDE;
-}
-
-auto sdk::vec2::norm2rad2deg() -> float
+auto sdk::vec2::from_norm_to_deg() -> float
 {
 	return std::atan2f(this->y, this->x) * 180.f / std::numbers::pi_v<float>;
 }

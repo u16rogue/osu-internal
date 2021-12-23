@@ -9,31 +9,6 @@
 #include "../manager/gamefield_manager.hpp"
 #include "../manager/beatmap_manager.hpp"
 
-#if 0
-auto features::aim_assist::get_velocity() -> float
-{
-	int   sample_count { 0 };
-	float result      { 0.f };
-
-	auto tick = GetTickCount();
-
-	for (const auto & v : move_samples)
-	{
-		if (v.tick < tick)
-			continue;
-
-		++sample_count;
-		//result += v.
-	}
-
-	return 0.0f;
-}
-
-auto features::aim_assist::push_sample(sdk::vec2 & pos) -> void
-{
-}
-#endif
-
 auto features::aim_assist::on_tab_render() -> void
 {
 	if (!ImGui::BeginTabItem("Aim assist"))
@@ -43,6 +18,8 @@ auto features::aim_assist::on_tab_render() -> void
 	OC_IMGUI_HOVER_TXT("Enable aim assistance - Corrects your aim to the neareast hit object when moving your cursor.");
 	ImGui::SliderFloat("FOV", &fov, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Distance between your cursor and the hit object required before aim assistance activates. (0 = Global)");
+	ImGui::SliderFloat("Direction FOV", &dir_fov, 0.f, 180.f);
+	OC_IMGUI_HOVER_TXT("Directional angle field of view for aim assist to active. (0 = full 360)");
 	ImGui::SliderFloat("Safezone FOV", &safezone, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Disables the aim assist when the player cursor is within the safezone. (0 = Never)");
 	ImGui::SliderFloat("Assist strength", &strength, 0.f, 60.f);
@@ -66,24 +43,52 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 auto features::aim_assist::on_render() -> void
 {
 	// HACK: DEBUG CODE! REMOVE!
+
+	auto clamp_angle = [](float angle) -> float
+	{
+		if (angle > 180.f)
+			return (180.f - (angle - 180.f)) * -1.f;
+		else if (angle > -180.f)
+			return 180.f + (angle + 180.f);
+
+		return angle;
+	};
+
+	std::string _dbg_txt_info = "";
+	auto [_ho, _i] = manager::beatmap::get_coming_hitobject();
 	auto _draw = ImGui::GetBackgroundDrawList();
 	// Visualize player direction
 	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
 	// Velocity
-	std::string _dbg_txt_info = "Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(player_direction.norm2rad2deg());
-	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, _dbg_txt_info.c_str());
-	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, _dbg_txt_info.c_str());
+	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(player_direction.from_norm_to_deg()));
 	// Visualize directional FOV
-	float cur_ang = player_direction.norm2rad2deg();
-	float min_b_ang = cur_ang - dir_fov;
-	float max_b_ang = cur_ang + dir_fov;
+	float cur_ang = player_direction.from_norm_to_deg();
+	float min_b_ang = clamp_angle(cur_ang - dir_fov);
+	float max_b_ang = clamp_angle(cur_ang + dir_fov);
 	auto min_dir = sdk::vec2::from_deg(min_b_ang);
 	auto max_dir = sdk::vec2::from_deg(max_b_ang);
 	auto min_point = min_dir * 80.f;
 	auto max_point = max_dir * 80.f;
-
 	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + min_point, 0xFFFFFFFF, 4.f);
 	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + max_point, 0xFFFFFFFF, 4.f);
+	_dbg_txt_info.append("\nMin: " + std::to_string(min_b_ang));
+	_dbg_txt_info.append("\nMax: " + std::to_string(max_b_ang));
+	// Draw degree towards ho
+	if (_ho)
+	{
+		auto to_angle = game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view()).from_norm_to_deg();
+		_dbg_txt_info.append("\nAngle to HO: " + std::to_string(to_angle));
+		ImU32 col = 0xFF0000FF;
+		// Check if in directional fov
+		if (to_angle >= min_b_ang && to_angle <= max_b_ang)
+		{
+			col = 0xFFFF0000;
+		}
+		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + sdk::vec2::from_deg(to_angle) * 80.f, col, 4.f);
+	}
+	// Draw debug text
+	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, _dbg_txt_info.c_str());
+	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, _dbg_txt_info.c_str());
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
@@ -109,7 +114,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (auto _velocity = last_tick_point.distance(*raw_coords); _velocity != 0.f)
 	{
 		velocity = _velocity;
-		player_direction = last_tick_point.normalize(*raw_coords);
+		player_direction = last_tick_point.normalize_towards(*raw_coords);
 		last_tick_point = *raw_coords;
 	}
 

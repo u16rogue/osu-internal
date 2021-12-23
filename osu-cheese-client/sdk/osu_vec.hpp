@@ -9,12 +9,6 @@ namespace sdk
 {
 	struct vec2
 	{
-		enum class rangestat
-		{
-			INSIDE,
-			OUTSIDE
-		};
-
 		float x, y;
 
 		vec2()
@@ -33,12 +27,10 @@ namespace sdk
 		auto field_to_view() const -> vec2;
 		static auto field_to_view(vec2 & v) -> void;
 		
-		auto normalize(const vec2 & to) const -> vec2;
+		auto normalize_towards(const vec2 & to) const -> vec2;
 		auto forward_towards(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
 
-		auto range(const vec2 & to, float field) const -> rangestat;
-
-		auto norm2rad2deg() -> float; // lol
+		auto from_norm_to_deg() -> float; // lol
 
 		static auto from_rad(float rad) -> vec2;
 		static auto from_deg(float deg) -> vec2;

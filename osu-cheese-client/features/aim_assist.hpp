@@ -11,7 +11,7 @@ namespace features
 		
 		inline static bool  enable          = false;
 		inline static float fov             = 0.f;
-		inline static float dir_fov         = 8.f;
+		inline static float dir_fov         = 45.f;
 		inline static float safezone        = 20.f;
 		inline static float strength        = 4.f;
 		inline static float timeoffsetratio = 0.8f;
@@ -21,23 +21,8 @@ namespace features
 
 		inline static bool vis_fov         = false;
 		inline static bool vis_safezonefov = false;
-		// inline static bool vis_aimassist   = false;
 
-		inline static float         velocity { 0.f };
-		
-		#if 0
-		struct sample_data_t
-		{
-			sdk::vec2 pos;
-			DWORD tick;
-		};
-		
-		inline static sample_data_t move_samples[25];
-		inline static int           sample_index { 0 };
-		#endif
-
-		static auto get_velocity() -> float;
-		static auto push_sample(sdk::vec2 & pos) -> void;
+		inline static float velocity { 0.f };
 
 	public:
 		aim_assist() = delete;
