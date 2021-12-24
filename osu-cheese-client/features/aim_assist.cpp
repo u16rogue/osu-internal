@@ -46,10 +46,10 @@ auto features::aim_assist::on_render() -> void
 
 	auto clamp_angle = [](float angle) -> float
 	{
-		if (angle > 180.f)
-			return (180.f - (angle - 180.f)) * -1.f;
-		else if (angle > -180.f)
-			return 180.f + (angle + 180.f);
+		//if (angle > -179.f)
+		//	return 180.f - (angle + 180.f);
+		//else if (angle > 180.f)
+		//	return -180.f + (angle - 180.f);
 
 		return angle;
 	};
@@ -69,8 +69,15 @@ auto features::aim_assist::on_render() -> void
 	auto max_dir = sdk::vec2::from_deg(max_b_ang);
 	auto min_point = min_dir * 80.f;
 	auto max_point = max_dir * 80.f;
-	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + min_point, 0xFFFFFFFF, 4.f);
-	_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + max_point, 0xFFFFFFFF, 4.f);
+
+	auto min_xy = game::pp_viewpos_info->pos + min_point;
+	_draw->AddLine(game::pp_viewpos_info->pos, min_xy, 0xFFFFFFFF, 4.f);
+	_draw->AddText(min_xy, 0xFFFFFFFF, ("* Min: " + std::to_string(min_b_ang)).c_str());
+
+	auto max_xy = game::pp_viewpos_info->pos + max_point;
+	_draw->AddLine(game::pp_viewpos_info->pos, max_xy, 0xFFFFFFFF, 4.f);
+	_draw->AddText(max_xy, 0xFFFFFFFF, ("* Max: " + std::to_string(max_b_ang)).c_str());
+
 	_dbg_txt_info.append("\nMin: " + std::to_string(min_b_ang));
 	_dbg_txt_info.append("\nMax: " + std::to_string(max_b_ang));
 	// Draw degree towards ho

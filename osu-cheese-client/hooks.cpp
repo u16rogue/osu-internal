@@ -224,7 +224,10 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
 	if (oc::menu::visible && game::pp_raw_mode_info->is_raw)
+	{
 		*raw_coords = oc::menu::freeze_view_point;
+		return;
+	}
 
 	// TODO: actually rebuild this function from assembly
 	// but seems like there are other functions that does our
