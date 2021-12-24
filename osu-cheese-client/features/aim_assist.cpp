@@ -40,18 +40,41 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 	return false;
 }
 
+static auto _dbg_outline_txt(ImDrawList * draw, ImVec2 pos, std::string_view txt) -> void
+{
+	// LT
+	draw->AddText(ImVec2(pos.x - 1.f, pos.y - 1.f), 0xFF000000, txt.data());
+	// RT
+	draw->AddText(ImVec2(pos.x + 1.f, pos.y - 1.f), 0xFF000000, txt.data());
+	// LB
+	draw->AddText(ImVec2(pos.x - 1.f, pos.y + 1.f), 0xFF000000, txt.data());
+	// RB
+	draw->AddText(ImVec2(pos.x + 1.f, pos.y + 1.f), 0xFF000000, txt.data());
+
+	// original
+	draw->AddText(pos, 0xFFFFFFFF, txt.data());
+}
+
 auto features::aim_assist::on_render() -> void
 {
 	// HACK: DEBUG CODE! REMOVE!
 
-	auto clamp_angle = [](float angle) -> float
+	auto clamp_angle = [](float idklol) -> float
 	{
-		//if (angle > -179.f)
-		//	return 180.f - (angle + 180.f);
-		//else if (angle > 180.f)
-		//	return -180.f + (angle - 180.f);
+		if (idklol < 0)
+			return std::fabs(180.f + ( 180.f + idklol));
 
-		return angle;
+		return idklol;
+	};
+
+	auto meme = [](float aaaaa) -> float
+	{
+		if (aaaaa < -180.f)
+			return std::fabs(std::fmodf(aaaaa, 180.f));
+		else if (aaaaa < 0.f)
+			return std::fabs(aaaaa);
+		
+		return std::fmodf(aaaaa, 180.f);
 	};
 
 	std::string _dbg_txt_info = "";
@@ -60,43 +83,28 @@ auto features::aim_assist::on_render() -> void
 	// Visualize player direction
 	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
 	// Velocity
-	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(player_direction.from_norm_to_deg()));
-	// Visualize directional FOV
-	float cur_ang = player_direction.from_norm_to_deg();
-	float min_b_ang = clamp_angle(cur_ang - dir_fov);
-	float max_b_ang = clamp_angle(cur_ang + dir_fov);
-	auto min_dir = sdk::vec2::from_deg(min_b_ang);
-	auto max_dir = sdk::vec2::from_deg(max_b_ang);
-	auto min_point = min_dir * 80.f;
-	auto max_point = max_dir * 80.f;
+	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(clamp_angle(player_direction.from_norm_to_deg())));
 
-	auto min_xy = game::pp_viewpos_info->pos + min_point;
-	_draw->AddLine(game::pp_viewpos_info->pos, min_xy, 0xFFFFFFFF, 4.f);
-	_draw->AddText(min_xy, 0xFFFFFFFF, ("* Min: " + std::to_string(min_b_ang)).c_str());
-
-	auto max_xy = game::pp_viewpos_info->pos + max_point;
-	_draw->AddLine(game::pp_viewpos_info->pos, max_xy, 0xFFFFFFFF, 4.f);
-	_draw->AddText(max_xy, 0xFFFFFFFF, ("* Max: " + std::to_string(max_b_ang)).c_str());
-
-	_dbg_txt_info.append("\nMin: " + std::to_string(min_b_ang));
-	_dbg_txt_info.append("\nMax: " + std::to_string(max_b_ang));
 	// Draw degree towards ho
 	if (_ho)
 	{
-		auto to_angle = game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view()).from_norm_to_deg();
-		_dbg_txt_info.append("\nAngle to HO: " + std::to_string(to_angle));
-		ImU32 col = 0xFF0000FF;
-		// Check if in directional fov
-		if (to_angle >= min_b_ang && to_angle <= max_b_ang)
-		{
-			col = 0xFFFF0000;
-		}
-		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos + sdk::vec2::from_deg(to_angle) * 80.f, col, 4.f);
+		auto pp = player_direction.from_norm_to_deg();
+		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp - dir_fov, 80.f), 0xFFFFFFFF, 4.f);
+		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp + dir_fov, 80.f), 0xFFFFFFFF, 4.f);
+
+		//_draw->AddLine(game::pp_viewpos_info->pos, fwd_dist, 0xFFFFFFFF, 4.f);
+		//_dbg_outline_txt(_draw, fwd_dist, std::to_string(dist_between));
+		//
+		//ImU32 col = 0xFF0000FF;
+		//if (dist_between <= dir_fov)
+		//{
+		//	col = 0xFFFF0000;
+		//}
+		
 	}
 	// Draw debug text
-	_draw->AddText(game::pp_viewpos_info->pos + 1.f, 0xFF000000, _dbg_txt_info.c_str());
-	_draw->AddText(game::pp_viewpos_info->pos, 0xFFFFFFFF, _dbg_txt_info.c_str());
-
+	_dbg_outline_txt(_draw, game::pp_viewpos_info->pos, _dbg_txt_info);
+	
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
 

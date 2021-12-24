@@ -54,6 +54,16 @@ auto sdk::vec2::forward_towards(const vec2 & to, float fwd_distance) const -> ve
 	);
 }
 
+auto sdk::vec2::forward(const float direction, float fwd_distance) -> vec2
+{
+	return forward(vec2::from_deg(direction), fwd_distance);
+}
+
+auto sdk::vec2::forward(const vec2 & direction, float fwd_distance) const -> vec2
+{
+	return *this + direction * fwd_distance;
+}
+
 auto sdk::vec2::from_norm_to_deg() -> float
 {
 	return std::atan2f(this->y, this->x) * 180.f / std::numbers::pi_v<float>;

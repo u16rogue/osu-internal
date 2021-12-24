@@ -30,6 +30,9 @@ namespace sdk
 		auto normalize_towards(const vec2 & to) const -> vec2;
 		auto forward_towards(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
 
+		auto forward(const float direction /* in degrees */, float fwd_distance = 1.f) -> vec2;
+		auto forward(const vec2 & direction, float fwd_distance = 1.f) const -> vec2;
+
 		auto from_norm_to_deg() -> float; // lol
 
 		static auto from_rad(float rad) -> vec2;
