@@ -92,15 +92,17 @@ auto features::aim_assist::on_render() -> void
 		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp - dir_fov, 80.f), 0xFFFFFFFF, 4.f);
 		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp + dir_fov, 80.f), 0xFFFFFFFF, 4.f);
 
-		//_draw->AddLine(game::pp_viewpos_info->pos, fwd_dist, 0xFFFFFFFF, 4.f);
-		//_dbg_outline_txt(_draw, fwd_dist, std::to_string(dist_between));
-		//
-		//ImU32 col = 0xFF0000FF;
-		//if (dist_between <= dir_fov)
-		//{
-		//	col = 0xFFFF0000;
-		//}
+		auto dir_len = player_direction.magnitude();
 		
+		ImU32 col = 0xFF0000FF;
+		auto ang = player_direction.angle_to_vec(game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view())); 
+		if (ang <= dir_fov)
+		{
+			col = 0xFFFF0000;
+		}
+		
+		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward_towards(_ho->coords.field_to_view(), 80.f), col, 4.f);
+		_dbg_txt_info.append("\nAngle to HO: " + std::to_string(ang));
 	}
 	// Draw debug text
 	_dbg_outline_txt(_draw, game::pp_viewpos_info->pos, _dbg_txt_info);

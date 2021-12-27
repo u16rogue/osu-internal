@@ -27,11 +27,18 @@ namespace sdk
 		auto field_to_view() const -> vec2;
 		static auto field_to_view(vec2 & v) -> void;
 		
+		auto magnitude() const -> float;
+
 		auto normalize_towards(const vec2 & to) const -> vec2;
 		auto forward_towards(const vec2 & to, float fwd_distance = 1.f) const -> vec2;
 
 		auto forward(const float direction /* in degrees */, float fwd_distance = 1.f) -> vec2;
 		auto forward(const vec2 & direction, float fwd_distance = 1.f) const -> vec2;
+
+		auto dot_product(const vec2 & other) const -> float;
+
+		// angle to another vector
+		auto angle_to_vec(const vec2 & other) const -> float;
 
 		auto from_norm_to_deg() -> float; // lol
 

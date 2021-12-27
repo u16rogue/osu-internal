@@ -36,6 +36,11 @@ auto sdk::vec2::field_to_view(vec2 & v) -> void
 	v.y = v.y * manager::game_field::field_ratio + manager::game_field::offset_y;
 }
 
+auto sdk::vec2::magnitude() const -> float
+{
+	return std::sqrt(this->dot_product(*this));
+}
+
 auto sdk::vec2::normalize_towards(const vec2 & to) const -> vec2
 {
 	auto dist = this->distance(to);
@@ -62,6 +67,16 @@ auto sdk::vec2::forward(const float direction, float fwd_distance) -> vec2
 auto sdk::vec2::forward(const vec2 & direction, float fwd_distance) const -> vec2
 {
 	return *this + direction * fwd_distance;
+}
+
+auto sdk::vec2::dot_product(const vec2 & other) const -> float
+{
+	return this->x * other.x + this->y * other.y;
+}
+
+auto sdk::vec2::angle_to_vec(const vec2 & other) const -> float
+{
+	return std::acosf(this->dot_product(other) / (this->magnitude() * other.magnitude())) * 180.f / std::numbers::pi_v<float>;
 }
 
 auto sdk::vec2::from_norm_to_deg() -> float
