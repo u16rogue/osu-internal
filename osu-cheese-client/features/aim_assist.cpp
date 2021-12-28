@@ -146,6 +146,10 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (dir_fov != 0.f && player_direction.vec2vec_angle(player_field_pos.normalize_towards(ho->coords)) > dir_fov)
 		return;
 
+	// Check if we're at the same point
+	if (player_field_pos == ho->coords)
+		return;
+
 	// Safezone override
 	if (safezone != 0.f && dist_to_ho <= safezone)
 	{
