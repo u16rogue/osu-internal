@@ -38,7 +38,7 @@ namespace sdk
 		auto dot_product(const vec2 & other) const -> float;
 
 		// angle to another vector
-		auto angle_to_vec(const vec2 & other) const -> float;
+		auto vec2vec_angle(const vec2 & other) const -> float;
 
 		auto from_norm_to_deg() -> float; // lol
 

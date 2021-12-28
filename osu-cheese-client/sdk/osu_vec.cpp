@@ -74,7 +74,7 @@ auto sdk::vec2::dot_product(const vec2 & other) const -> float
 	return this->x * other.x + this->y * other.y;
 }
 
-auto sdk::vec2::angle_to_vec(const vec2 & other) const -> float
+auto sdk::vec2::vec2vec_angle(const vec2 & other) const -> float
 {
 	return std::acosf(this->dot_product(other) / (this->magnitude() * other.magnitude())) * 180.f / std::numbers::pi_v<float>;
 }

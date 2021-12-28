@@ -22,10 +22,12 @@ auto features::aim_assist::on_tab_render() -> void
 	OC_IMGUI_HOVER_TXT("Directional angle field of view for aim assist to active. (0 = full 360)");
 	ImGui::SliderFloat("Safezone FOV", &safezone, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Disables the aim assist when the player cursor is within the safezone. (0 = Never)");
-	ImGui::SliderFloat("Assist strength", &strength, 0.f, 60.f);
-	OC_IMGUI_HOVER_TXT("Strength of the aim assist. (0 = Instant lock)");
+	ImGui::SliderFloat("Assist Scale", &scaleassist, 0.f, 2.f);
+	OC_IMGUI_HOVER_TXT("Scales the aim assist amount.");
 	ImGui::SliderFloat("Target time offset ratio", &timeoffsetratio, 0.f, 1.f);
 	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active.");
+
+	ImGui::Combo("Assist movement method", reinterpret_cast<int *>(&method), "Linear\0Directional Curved\0");
 
 	ImGui::Separator();
 
@@ -59,31 +61,13 @@ auto features::aim_assist::on_render() -> void
 {
 	// HACK: DEBUG CODE! REMOVE!
 
-	auto clamp_angle = [](float idklol) -> float
-	{
-		if (idklol < 0)
-			return std::fabs(180.f + ( 180.f + idklol));
-
-		return idklol;
-	};
-
-	auto meme = [](float aaaaa) -> float
-	{
-		if (aaaaa < -180.f)
-			return std::fabs(std::fmodf(aaaaa, 180.f));
-		else if (aaaaa < 0.f)
-			return std::fabs(aaaaa);
-		
-		return std::fmodf(aaaaa, 180.f);
-	};
-
 	std::string _dbg_txt_info = "";
 	auto [_ho, _i] = manager::beatmap::get_coming_hitobject();
 	auto _draw = ImGui::GetBackgroundDrawList();
 	// Visualize player direction
 	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
 	// Velocity
-	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity) + "\nDegrees: " + std::to_string(clamp_angle(player_direction.from_norm_to_deg())));
+	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity));
 
 	// Draw degree towards ho
 	if (_ho)
@@ -95,7 +79,7 @@ auto features::aim_assist::on_render() -> void
 		auto dir_len = player_direction.magnitude();
 		
 		ImU32 col = 0xFF0000FF;
-		auto ang = player_direction.angle_to_vec(game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view())); 
+		auto ang = player_direction.vec2vec_angle(game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view())); 
 		if (ang <= dir_fov)
 		{
 			col = 0xFFFF0000;
@@ -158,6 +142,10 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (fov != 0.f && dist_to_ho > fov)
 		return;
 
+	// Check direction
+	if (dir_fov != 0.f && player_direction.vec2vec_angle(player_field_pos.normalize_towards(ho->coords)) > dir_fov)
+		return;
+
 	// Safezone override
 	if (safezone != 0.f && dist_to_ho <= safezone)
 	{
@@ -165,7 +153,9 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		return;
 	}
 
-	auto new_coords = strength == 0.f ? ho->coords.field_to_view() : player_field_pos.forward_towards(ho->coords, std::clamp(strength, 0.f, dist_to_ho)).field_to_view();
+	DEBUG_PRINTF("\n[D] velocity: %.2f", velocity);
+	auto new_coords = /* strength == 0.f ? ho->coords.field_to_view() : */ player_field_pos.forward_towards(ho->coords, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
+	last_tick_point = new_coords; // update last tick point to our new coordinates since the new coords will now be our current point for the tick this also prevents over calculating the velocity
 
 	*raw_coords = new_coords;
 
