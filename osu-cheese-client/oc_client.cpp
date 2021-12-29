@@ -16,7 +16,7 @@ auto oc::load() -> bool
 	if (!game::initialize() || !hooks::install())
 	{
 		DEBUG_PRINTF("\n[!] Initialization failed");
-		// FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(inst), 0);
+		return false;
 	}
 
 	DEBUG_PRINTF("\n[+] Ready!");
