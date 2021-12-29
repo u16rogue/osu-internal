@@ -19,7 +19,7 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::SliderFloat("FOV", &fov, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Distance between your cursor and the hit object required before aim assistance activates. (0 = Global)");
 	ImGui::SliderFloat("Direction FOV", &dir_fov, 0.f, 180.f);
-	OC_IMGUI_HOVER_TXT("Directional angle field of view for aim assist to active. (0 = full 360)");
+	OC_IMGUI_HOVER_TXT("Directional angle field of view for aim assist to activate. (0 = full 360)");
 	ImGui::SliderFloat("Safezone FOV", &safezone, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Disables the aim assist when the player cursor is within the safezone. (0 = Never)");
 	ImGui::SliderFloat("Assist Scale", &scaleassist, 0.f, 2.f);
@@ -61,6 +61,7 @@ auto features::aim_assist::on_render() -> void
 {
 	// HACK: DEBUG CODE! REMOVE!
 
+	#if 1
 	std::string _dbg_txt_info = "";
 	auto [_ho, _i] = manager::beatmap::get_coming_hitobject();
 	auto _draw = ImGui::GetBackgroundDrawList();
@@ -90,7 +91,8 @@ auto features::aim_assist::on_render() -> void
 	}
 	// Draw debug text
 	_dbg_outline_txt(_draw, game::pp_viewpos_info->pos, _dbg_txt_info);
-	
+	#endif
+
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
 
@@ -110,8 +112,6 @@ auto features::aim_assist::on_render() -> void
 
 auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
-	static const sdk::hit_object * ho_filter = nullptr;
-
 	if (auto _velocity = last_tick_point.distance(*raw_coords); _velocity != 0.f)
 	{
 		velocity = _velocity;
@@ -123,7 +123,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		return;
 
 	auto [ho, i] = manager::beatmap::get_coming_hitobject();
-	if (!ho || ho == ho_filter)
+	if (!ho)
 		return;
 
 	// Check time offset
@@ -152,16 +152,29 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 
 	// Safezone override
 	if (safezone != 0.f && dist_to_ho <= safezone)
-	{
-		ho_filter = ho;
 		return;
+
+	sdk::vec2 new_coords;
+
+	switch (method)
+	{
+		case method_e::LINEAR:
+		{
+			new_coords = player_field_pos.forward_towards(ho->coords, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
+			break;
+		}
+
+		case method_e::DIRECTIONAL_CURVE:
+		{
+			break;
+		}
+
+		default:
+			return;
 	}
 
-	DEBUG_PRINTF("\n[D] velocity: %.2f", velocity);
-	auto new_coords = /* strength == 0.f ? ho->coords.field_to_view() : */ player_field_pos.forward_towards(ho->coords, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
 	last_tick_point = new_coords; // update last tick point to our new coordinates since the new coords will now be our current point for the tick this also prevents over calculating the velocity
-
-	*raw_coords = new_coords;
+	*raw_coords     = new_coords;
 
 	if (!game::pp_raw_mode_info->is_raw)
 	{
