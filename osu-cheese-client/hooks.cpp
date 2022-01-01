@@ -276,7 +276,7 @@ static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 	if (real_return_address >= wnform_start && real_return_address <= wnform_end && oc::menu::visible)
 	{
 		POINT p = oc::menu::freeze_view_point;
-		ClientToScreen(game::pp_wnd_info->handle, &p);
+		ClientToScreen(game::hwnd, &p);
 		*lpPoint = p;
 		return true;
 	}

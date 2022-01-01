@@ -14,7 +14,8 @@ namespace game
 	inline sdk::pp_viewpos_info_t  pp_viewpos_info;
 	inline sdk::unk_game_info_a  * p_game_info { nullptr };
 	inline sdk::pp_raw_mode_info_t pp_raw_mode_info;
-	inline sdk::pp_wnd_info_t      pp_wnd_info;
+	//inline sdk::pp_wnd_info_t      pp_wnd_info;
+	inline HWND                    hwnd;
 
 	auto initialize() -> bool;
 }

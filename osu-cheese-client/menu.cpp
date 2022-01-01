@@ -46,7 +46,7 @@ auto oc::menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> boo
 		if (menu::visible && game::pp_raw_mode_info->is_raw || !menu::visible)
 		{
 			POINT p = menu::freeze_view_point;
-			ClientToScreen(game::pp_wnd_info->handle, &p);
+			ClientToScreen(game::hwnd, &p);
 			SetCursorPos(p.x, p.y);
 		}
 
