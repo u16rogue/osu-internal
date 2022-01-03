@@ -16,18 +16,45 @@ auto features::aim_assist::on_tab_render() -> void
 
 	ImGui::Checkbox("Aim assist", &enable);
 	OC_IMGUI_HOVER_TXT("Enable aim assistance - Corrects your aim to the neareast hit object when moving your cursor.");
+
 	ImGui::SliderFloat("FOV", &fov, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Distance between your cursor and the hit object required before aim assistance activates. (0 = Global)");
+
 	ImGui::SliderFloat("Direction FOV", &dir_fov, 0.f, 180.f);
 	OC_IMGUI_HOVER_TXT("Directional angle field of view for aim assist to activate. (0 = full 360)");
+
 	ImGui::SliderFloat("Safezone FOV", &safezone, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Disables the aim assist when the player cursor is within the safezone. (0 = Never)");
+
 	ImGui::SliderFloat("Assist Scale", &scaleassist, 0.f, 2.f);
 	OC_IMGUI_HOVER_TXT("Scales the aim assist amount.");
+
 	ImGui::SliderFloat("Target time offset ratio", &timeoffsetratio, 0.f, 1.f);
 	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active.");
 
 	ImGui::Combo("Assist movement method", reinterpret_cast<int *>(&method), "Linear\0Directional Curved\0");
+	switch (method)
+	{
+		case features::aim_assist::method_e::DIRECTIONAL_CURVE:
+		{
+			ImGui::SliderFloat("Player to Hit object ratio", &mdc_ho_ratio, 0.f, 1.f);
+			OC_IMGUI_HOVER_TXT("Ratio to take in account from the player to the hit object when calculating the curve used for the aim assist.");
+
+			ImGui::SliderFloat("Player to direction ratio", &mdc_pdir_ratio, 0.f, 1.f);
+			OC_IMGUI_HOVER_TXT("Ratio to take in account from the player to the forward direction when calculating the curve used for the aim assist.");
+
+			ImGui::SliderFloat("Midpoint ratio", &mdc_midpoint_ratio, 0.f, 1.f);
+			OC_IMGUI_HOVER_TXT("Ratio to calculate the mid point for the curve of the aim assist.");
+
+			ImGui::Combo("Follow method", reinterpret_cast<int *>(&mdc_method), "Hit object to Player direction\0Player direction to Hit object\0Dynamic (Auto)\0");
+			OC_IMGUI_HOVER_TXT("Starting point of where to calculate the ratio from.");
+
+			break;
+		}
+
+		default:
+			break;
+	}
 
 	ImGui::Separator();
 
@@ -42,6 +69,7 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 	return false;
 }
 
+// HACK: DEBUG CODE! REMOVE!
 static auto _dbg_outline_txt(ImDrawList * draw, ImVec2 pos, std::string_view txt) -> void
 {
 	// LT
@@ -166,6 +194,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 
 		case method_e::DIRECTIONAL_CURVE:
 		{
+			auto dir_to_ho = player_field_pos.normalize_towards(ho->coords);
 			break;
 		}
 
@@ -174,7 +203,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	}
 
 	last_tick_point = new_coords; // update last tick point to our new coordinates since the new coords will now be our current point for the tick this also prevents over calculating the velocity
-	*raw_coords     = new_coords;
+	*raw_coords     = new_coords; // update the ingame coordinates
 
 	if (!game::pp_raw_mode_info->is_raw)
 	{

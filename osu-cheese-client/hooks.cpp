@@ -364,8 +364,8 @@ auto hooks::install() -> bool
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
-	#define _OC_ADD_HOOK_INSTANCE(patchtype, ...) \
-		_instances.push_back(std::make_unique<sed::mempatch_##patchtype##r32>(__VA_ARGS__))
+	#define _OC_ADD_HOOK_INSTANCE(patchtype, from, to) \
+		_instances.push_back(std::make_unique<sed::mempatch_##patchtype##r32>(reinterpret_cast<void *>(from), reinterpret_cast<void *>(to)))
 	
 	hook_instances_t _instances;
 
