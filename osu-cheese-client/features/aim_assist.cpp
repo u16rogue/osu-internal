@@ -32,7 +32,7 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::SliderFloat("Target time offset ratio", &timeoffsetratio, 0.f, 1.f);
 	OC_IMGUI_HOVER_TXT("Amount of time ahead on recognizing a hit object as active.");
 
-	ImGui::Combo("Assist movement method", reinterpret_cast<int *>(&method), "Linear\0Directional Curved\0");
+	ImGui::Combo("Assist movement method", reinterpret_cast<int *>(&method), "Linear\0Directional Curve\0");
 	switch (method)
 	{
 		case features::aim_assist::method_e::DIRECTIONAL_CURVE:
@@ -47,7 +47,7 @@ auto features::aim_assist::on_tab_render() -> void
 			OC_IMGUI_HOVER_TXT("Ratio to calculate the mid point for the curve of the aim assist.");
 
 			ImGui::Combo("Follow method", reinterpret_cast<int *>(&mdc_method), "Hit object to Player direction\0Player direction to Hit object\0Dynamic (Auto)\0");
-			OC_IMGUI_HOVER_TXT("Starting point of where to calculate the ratio from.");
+			OC_IMGUI_HOVER_TXT("Starting point of where to calculate the midpoint ratio from.");
 
 			break;
 		}
@@ -85,6 +85,8 @@ static auto _dbg_outline_txt(ImDrawList * draw, ImVec2 pos, std::string_view txt
 	draw->AddText(pos, 0xFFFFFFFF, txt.data());
 }
 
+static sdk::vec2 _dbg_curve_point;
+
 auto features::aim_assist::on_render() -> void
 {
 	// HACK: DEBUG CODE! REMOVE!
@@ -119,6 +121,10 @@ auto features::aim_assist::on_render() -> void
 	}
 	// Draw debug text
 	_dbg_outline_txt(_draw, game::pp_viewpos_info->pos, _dbg_txt_info);
+
+	// Curve point
+	if (method == method_e::DIRECTIONAL_CURVE)
+		_draw->AddCircleFilled(_dbg_curve_point.field_to_view(), 3.f, 0xFF0000FF);
 	#endif
 
 	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
@@ -182,19 +188,46 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (safezone != 0.f && dist_to_ho <= safezone)
 		return;
 
-	sdk::vec2 new_coords;
+	sdk::vec2 new_coords, target /* temporary for optimization, might be irrelevant in the future */;
 
 	switch (method)
 	{
 		case method_e::LINEAR:
 		{
-			new_coords = player_field_pos.forward_towards(ho->coords, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
+			target = ho->coords;
 			break;
 		}
 
 		case method_e::DIRECTIONAL_CURVE:
 		{
-			auto dir_to_ho = player_field_pos.normalize_towards(ho->coords);
+			auto p2ho_p = player_field_pos.forward_towards(ho->coords, dist_to_ho * mdc_ho_ratio);
+			auto p2dir_p = player_field_pos.forward(player_direction, dist_to_ho * mdc_pdir_ratio);
+
+			sdk::vec2 start, end;
+
+			switch (mdc_method)
+			{
+				case mdc_mpoint_method_e::HO_TO_PDIR:
+				{
+					start = p2ho_p;
+					end = p2dir_p;
+					break;
+				}
+
+				case mdc_mpoint_method_e::DYNAMIC: // TODO: implement this
+				case mdc_mpoint_method_e::PDIR_TO_HO:
+				{
+					start = p2dir_p;
+					end = p2ho_p;
+					break;
+				}
+
+				default:
+					break;
+			}
+
+			target = start.forward_towards(end, start.distance(end) * mdc_midpoint_ratio);
+			_dbg_curve_point = target;
 			break;
 		}
 
@@ -202,6 +235,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 			return;
 	}
 
+	new_coords      = player_field_pos.forward_towards(target, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
 	last_tick_point = new_coords; // update last tick point to our new coordinates since the new coords will now be our current point for the tick this also prevents over calculating the velocity
 	*raw_coords     = new_coords; // update the ingame coordinates
 

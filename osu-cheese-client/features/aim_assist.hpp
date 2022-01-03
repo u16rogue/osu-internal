@@ -13,7 +13,7 @@ namespace features
 			DIRECTIONAL_CURVE
 		};
 
-		enum class mdc_mpoint_follow : int
+		enum class mdc_mpoint_method_e : int
 		{
 			HO_TO_PDIR,
 			PDIR_TO_HO,
@@ -34,10 +34,10 @@ namespace features
 		inline static bool vis_safezonefov = false;
 
 		// Directional curve settings
-		inline static float mdc_ho_ratio       = 0.5f;
-		inline static float mdc_pdir_ratio     = 0.5f; // player direction
-		inline static float mdc_midpoint_ratio = 0.8f;
-		inline static mdc_mpoint_follow mdc_method = mdc_mpoint_follow::PDIR_TO_HO; // TODO: implement
+		inline static float               mdc_ho_ratio       = 0.5f;
+		inline static float               mdc_pdir_ratio     = 0.5f; // player direction
+		inline static float               mdc_midpoint_ratio = 0.1f;
+		inline static mdc_mpoint_method_e mdc_method         = mdc_mpoint_method_e::PDIR_TO_HO; // TODO: implement
 
 		// Internal calculations and tracking
 		inline static sdk::vec2 last_tick_point  {};
