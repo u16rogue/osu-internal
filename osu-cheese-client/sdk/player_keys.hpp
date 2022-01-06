@@ -16,8 +16,9 @@ namespace sdk
 
 	struct player_keys_t
 	{
+	private:
 		char pad[0x8];
-
+	public:
 		struct
 		{
 			player_key left_click;
@@ -37,6 +38,7 @@ namespace sdk
 
 	struct _PTRPK_
 	{
+	private:
 		char pad[0x8];
 	public:
 		player_keys_t *ppk;

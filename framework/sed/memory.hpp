@@ -85,7 +85,7 @@ namespace sed
 	auto pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
 	auto pattern_scan_exec_region(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
 
-	template <class data, typename default_t = int, default_t default_v = 0>
+	template <class data>
 	class basic_ptrptr
 	{
 	public:
@@ -111,8 +111,8 @@ namespace sed
 		}
 
 	public:
-		data ** ptr    { nullptr   };
-		data dummy     { default_v };
+		data ** ptr    { nullptr };
+		data dummy     { };
 	};
 
 }

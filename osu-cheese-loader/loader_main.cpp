@@ -13,7 +13,7 @@
 #if __has_include("client_path.hpp")
 	#include "client_path.hpp"
 #else
-	#define DEBUG_HARDCODE_CLIENT_PATH L""
+	#define DEBUG_HARDCODE_CLIENT_PATH ""
 #endif
 
 using info_t = std::pair<sed::smart_handle, DWORD>;
