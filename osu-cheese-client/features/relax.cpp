@@ -45,11 +45,12 @@ auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 	filter_ho = ho;
 
 	INPUT inp[2] { 0 };
-	inp[0].type = INPUT_MOUSE;
-	inp[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+	inp[0].type = INPUT_KEYBOARD;
+	inp[0].ki.wVk = game::pp_pplayer_keys->ppk->osu.left_click.vkey;
 
-	inp[1].type = INPUT_MOUSE;
-	inp[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+	inp[1].type = INPUT_KEYBOARD;
+	inp[1].ki.dwFlags = KEYEVENTF_KEYUP;
+	inp[1].ki.wVk = game::pp_pplayer_keys->ppk->osu.left_click.vkey;
 
 	SendInput(2, inp, sizeof(INPUT));
 

@@ -27,7 +27,7 @@ static auto pattern_scan_helper(const char * name, T & out, const char * pattern
 
 auto game::initialize() -> bool
 {
-	DEBUG_PRINTF("\n[+] Loading game information...\n"
+	DEBUG_PRINTF("\n[+] Loading game information..."
 				 "\n[+] Obtaining handle to window...");
 
 	while (!game::hwnd)

@@ -50,52 +50,42 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 
 static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
-	__asm__(
-	".intel_syntax noprefix \n"
-	"	push ebp	        \n"
-	"	mov ebp, esp        \n"
-	"	push eax            \n"
-	"	push [ebp+24]       \n"
-	"	push [ebp+20]       \n"
-	"	push [ebp+16]       \n"
-	"	push [ebp+12]       \n"
-	"	push eax	        \n"
-	);
+	__asm
+	{
+		push ebp	 
+		mov ebp, esp 
+		push eax     
+		push [ebp+24]
+		push [ebp+20]
+		push [ebp+16]
+		push [ebp+12]
+		push eax	 
+		call CallWindowProc_hook;
+		test al, al
+		jnz LBL_CWP_SKIP_ORIGINAL
+		pop eax
+		test al, al
+		jz LBL_CWP_VARIANT_A
 
-	// TODO: figure out how to do this in clang
-	// Call hook function and check return
-	__asm call CallWindowProc_hook;
-	__asm__(
-	".intel_syntax noprefix   \n"
-	"	test al, al           \n"
-	"	jnz LBL_CWP_SKIP_ORIGINAL \n"
-	"	pop eax               \n"
-	"   test al, al           \n"
-	"   jz LBL_CWP_VARIANT_A      \n"
-	);
+	LBL_CWP_VARIANT_W:
+		lea eax, [CallWindowProcW + 5]
+		jmp LBL_CWP_CALL_ORIGINAL
 
-	// Call W variant
-	__asm__("LBL_CWP_VARIANT_W:");
-	__asm lea eax, [CallWindowProcW + 5]
-	__asm__("jmp LBL_CWP_CALL_ORIGINAL");
+		// Call A variant
+	LBL_CWP_VARIANT_A:
+		lea eax, [CallWindowProcA + 5]
+		jmp LBL_CWP_CALL_ORIGINAL
 
-	// Call A variant
-	__asm__("LBL_CWP_VARIANT_A:");
-	__asm lea eax, [CallWindowProcA + 5]
-	__asm__("jmp LBL_CWP_CALL_ORIGINAL");
-
-	// Call original
-	__asm__(
-	".intel_syntax noprefix \n"
-	"LBL_CWP_SKIP_ORIGINAL: \n"
-	"   pop eax             \n"
-	"	pop ebp             \n"
-	"   mov eax, 1          \n"
-	"	ret 0x14            \n"
-	"LBL_CWP_CALL_ORIGINAL: \n"
-	// "	lea eax, [eax+5]    \n"
-	"	jmp eax             \n"
-	);
+		// Call original
+	LBL_CWP_SKIP_ORIGINAL:
+		pop eax   
+		pop ebp   
+		mov eax, 1
+		ret 0x14  
+	LBL_CWP_CALL_ORIGINAL:
+		// lea eax, [eax+5]
+		jmp eax
+	}
 }
 
 static auto __attribute__((naked)) CallWindowProcW_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
@@ -254,6 +244,9 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 static volatile decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
 static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 {
+	if (!oc::menu::visible)
+		return false;
+
 	static void * wnform_start, * wnform_end;
 	if (!wnform_start || !wnform_end)
 	{
@@ -278,7 +271,7 @@ static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 		pop eax
 	};
 	
-	if (real_return_address >= wnform_start && real_return_address <= wnform_end && oc::menu::visible)
+	if (real_return_address >= wnform_start && real_return_address <= wnform_end)
 	{
 		POINT p = oc::menu::freeze_view_point;
 		ClientToScreen(game::hwnd, &p);
@@ -298,31 +291,21 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 
 		push [ebp + 0x8]
 		call GetCursorPos_hook
+		test al, al
+		jz LBL_GETCURSORPOS_CALL_ORIGINAL
+
+		// Skip original and fake return
+		LBL_GETCURSORPOS_SKIP_ORIGINAL:
+		// "mov eax, 1                      \n" unecessary since our hook will be setting the eax (or al) register to 1 anyway
+		pop ebp
+		ret 4
+
+		// Call original
+		LBL_GETCURSORPOS_CALL_ORIGINAL:
+		mov eax, GetCursorPos_target
+		lea eax, [eax + 0x5]
+		jmp eax
 	}
-
-	__asm__(
-	".intel_syntax noprefix             \n"
-	"test al, al                        \n"
-	"jz LBL_GETCURSORPOS_CALL_ORIGINAL  \n"
-	);
-
-	// Skip original and fake return
-	__asm__(
-	".intel_syntax noprefix          \n"
-	"LBL_GETCURSORPOS_SKIP_ORIGINAL: \n"
-	// "mov eax, 1                      \n" unecessary since our hook will be setting the eax (or al) register to 1 anyway
-	"pop ebp                         \n"
-	"ret 4                           \n"
-	);
-	
-	// Call original
-	__asm__("LBL_GETCURSORPOS_CALL_ORIGINAL:");
-	__asm mov eax, GetCursorPos_target;
-	__asm__(
-	".intel_syntax noprefix \n"
-	"lea eax, [eax + 0x5]   \n"
-	"jmp eax                \n"
-	);
 }
 
 using hook_instances_t = std::vector<std::unique_ptr<sed::mempatch_interface>>;
