@@ -34,6 +34,7 @@ add_library(osu-cheese-client SHARED
 	"sdk/wnd_info.hpp"
 	"oc_client.hpp"
 	"oc_client.cpp"
+	"sdk/player_keys.hpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)

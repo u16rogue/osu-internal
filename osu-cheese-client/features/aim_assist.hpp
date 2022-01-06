@@ -37,7 +37,7 @@ namespace features
 		inline static float               mdc_ho_ratio       = 0.5f;
 		inline static float               mdc_pdir_ratio     = 0.5f; // player direction
 		inline static float               mdc_midpoint_ratio = 0.1f;
-		inline static mdc_mpoint_method_e mdc_method         = mdc_mpoint_method_e::PDIR_TO_HO; // TODO: implement
+		inline static mdc_mpoint_method_e mdc_method         = mdc_mpoint_method_e::PDIR_TO_HO;
 
 		// Internal calculations and tracking
 		inline static sdk::vec2 last_tick_point  {};

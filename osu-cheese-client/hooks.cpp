@@ -21,6 +21,11 @@
 
 #include "features/features.hpp"
 
+static auto CALLBACK WindowProc_hook( _In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
+{
+	return TRUE;
+}
+
 enum class CallWindowProc_variant : int
 {
 	A     = 0,
@@ -369,14 +374,14 @@ auto hooks::install() -> bool
 	
 	hook_instances_t _instances;
 
-	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA,                               CallWindowProcA_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW,                               CallWindowProcW_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,                                SetWindowTextW_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  gdi32full_SwapBuffers_target,                  gdi32full_SwapBuffers_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  osu_set_field_coords_target,                   osu_set_field_coords_proxy);
-	_OC_ADD_HOOK_INSTANCE(call, reinterpret_cast<void *>(cond_raw_coords),     osu_set_raw_coords_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  reinterpret_cast<void *>(cond_raw_coords + 5), reinterpret_cast<void *>(cond_raw_abs));
-	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                                  GetCursorPos_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA,              CallWindowProcA_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW,              CallWindowProcW_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,               SetWindowTextW_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  osu_set_field_coords_target,  osu_set_field_coords_proxy);
+	_OC_ADD_HOOK_INSTANCE(call, cond_raw_coords,              osu_set_raw_coords_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  cond_raw_coords + 5,          cond_raw_abs);
+	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                 GetCursorPos_proxy);
 
 	#undef _OC_ADD_HOOK_INSTANCE
 
@@ -388,7 +393,7 @@ auto hooks::install() -> bool
 			return false;
 		}
 	}
-	
+
 	hook_instances = std::move(_instances);
 	return true;
 }
