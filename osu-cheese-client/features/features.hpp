@@ -5,7 +5,7 @@
 namespace features
 {
 	template <class... fts>
-	struct _features_pack
+	struct _features_dispatch_pack
 	{
 		static auto on_tab_render() -> void
 		{
@@ -28,7 +28,7 @@ namespace features
 		}
 	};
 
-	using feature = _features_pack<
+	using dispatcher = _features_dispatch_pack<
 		aim_assist,
 		relax,
 		esp

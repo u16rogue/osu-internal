@@ -27,7 +27,7 @@ auto oc::menu::render() -> void
 
 	if (ImGui::BeginTabBar("##oc_tabs"))
 	{
-		features::feature::on_tab_render();
+		features::dispatcher::on_tab_render();
 		ImGui::EndTabBar();	
 	}
 	ImGui::End();

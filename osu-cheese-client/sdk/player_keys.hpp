@@ -26,7 +26,7 @@ namespace sdk
 			player_key smoke;
 		} osu;
 
-		// player_key other_keys[];
+		player_key other_keys[];
 
 		//struct
 		//{

@@ -37,7 +37,7 @@ auto game::initialize() -> bool
 			DWORD pid { 0 };
 			GetWindowThreadProcessId(hwnd, &pid);
 			wchar_t title_buffer[MAX_PATH] { 0 };
-			wchar_t class_buffer[MAX_PATH] { 0 };
+			wchar_t class_buffer[MAX_PATH] { 0 }; // can just reuse the buffer
 			if (pid != GetCurrentProcessId()
 			|| !GetWindowTextW(hwnd, title_buffer, ARRAYSIZE(title_buffer))
 			|| !sed::str_starts_with(title_buffer, L"osu!")

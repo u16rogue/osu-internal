@@ -21,10 +21,12 @@
 
 #include "features/features.hpp"
 
+#if 0
 static auto CALLBACK WindowProc_hook( _In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
 {
 	return TRUE;
 }
+#endif
 
 enum class CallWindowProc_variant : int
 {
@@ -41,7 +43,7 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 
 	if (variant == CallWindowProc_variant::MOUSE)
 	{
-		if (features::feature::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
+		if (features::dispatcher::on_wndproc(hWnd, Msg, wParam, lParam, nullptr))
 			return true;
 	}
 
@@ -124,7 +126,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	features::feature::on_render();
+	features::dispatcher::on_render();
 	oc::menu::render();
 
 	ImGui::Render();
@@ -228,7 +230,7 @@ static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> voi
 	// but seems like there are other functions that does our
 	// job for us so we don't have to worry about it but it's
 	// a better idea to actually rebuild it and restore functionality
-	features::feature::on_osu_set_raw_coords(raw_coords);
+	features::dispatcher::on_osu_set_raw_coords(raw_coords);
 }
 
 static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
@@ -241,6 +243,7 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 	};
 }
 
+// TODO: we can just hook the function that handles this instead so we don't have to check the return address
 static volatile decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
 static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 {
@@ -295,13 +298,13 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 		jz LBL_GETCURSORPOS_CALL_ORIGINAL
 
 		// Skip original and fake return
-		LBL_GETCURSORPOS_SKIP_ORIGINAL:
+	LBL_GETCURSORPOS_SKIP_ORIGINAL:
 		// "mov eax, 1                      \n" unecessary since our hook will be setting the eax (or al) register to 1 anyway
 		pop ebp
 		ret 4
 
 		// Call original
-		LBL_GETCURSORPOS_CALL_ORIGINAL:
+	LBL_GETCURSORPOS_CALL_ORIGINAL:
 		mov eax, GetCursorPos_target
 		lea eax, [eax + 0x5]
 		jmp eax
