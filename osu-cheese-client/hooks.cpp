@@ -50,6 +50,8 @@ static auto CALLBACK CallWindowProc_hook(CallWindowProc_variant variant, HWND hW
 	return false;
 }
 
+static decltype(CallWindowProcA) * CallWindowProcA_target = CallWindowProcA;
+static decltype(CallWindowProcW) * CallWindowProcW_target = CallWindowProcW;
 static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
 	__asm
@@ -70,12 +72,12 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 		jz LBL_CWP_VARIANT_A
 
 	LBL_CWP_VARIANT_W:
-		lea eax, [CallWindowProcW + 5]
+		mov eax, CallWindowProcA_target
 		jmp LBL_CWP_CALL_ORIGINAL
 
 		// Call A variant
 	LBL_CWP_VARIANT_A:
-		lea eax, [CallWindowProcA + 5]
+		mov eax, CallWindowProcW_target
 		jmp LBL_CWP_CALL_ORIGINAL
 
 		// Call original
@@ -85,7 +87,7 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 		mov eax, 1
 		ret 0x14  
 	LBL_CWP_CALL_ORIGINAL:
-		// lea eax, [eax+5]
+		lea eax, [eax+5]
 		jmp eax
 	}
 }
@@ -133,7 +135,7 @@ static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-static volatile decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
+static decltype(SwapBuffers) * gdi32full_SwapBuffers_target { nullptr };
 static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 {
 	__asm
@@ -180,7 +182,7 @@ static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 	manager::beatmap::load(*bm_file);
 }
 
-static volatile decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
+static decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;
 static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpString) -> BOOL
 {
 	__asm
@@ -244,7 +246,7 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 }
 
 // TODO: we can just hook the function that handles this instead so we don't have to check the return address
-static volatile decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
+static decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
 static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 {
 	if (!oc::menu::visible)
@@ -311,6 +313,21 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 	}
 }
 
+void * osu_ac_flag_original { nullptr };
+static auto __stdcall osu_ac_flag() -> void
+{
+	DEBUG_PRINTF("\n[!] Anti-cheat flag triggered!");
+}
+
+static auto __attribute__((naked)) osu_ac_flag_proxy() -> void
+{
+	__asm
+	{
+		call osu_ac_flag
+		jmp osu_ac_flag_original
+	};
+}
+
 using hook_instances_t = std::vector<std::unique_ptr<sed::mempatch_interface>>;
 static hook_instances_t hook_instances;
 
@@ -347,27 +364,39 @@ auto hooks::install() -> bool
 		return false;
 	}
 	DEBUG_PRINTF(" 0x%p", cond_raw_coords);
-
-	// Get rel8
 	auto cond_raw_rel8 = *reinterpret_cast<std::uint8_t *>(cond_raw_coords + 1);
 	DEBUG_PRINTF("\n[+] raw coords rel8 and abs -> 0x%x", cond_raw_rel8);
-	// Calculate absolute from rel8
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
+
+	// Anticheat flag
+	DEBUG_PRINTF("\n[+] Searching for ac_flag_call...");
+	auto ac_flag_call = sed::pattern_scan_exec_region(nullptr, - 1, "\xE8\x00\x00\x00\x00\x83\xC4\x00\x89\x45\x00\x8B\x4D\x00\x8B\x11\x8B\x42\x00\x89\x45\x00\x0F\xB6\x4D", "x????xx?xx?xx?xxxx?xx?xxx"); // TODO: this doesn't necessarily need to be scanned through regions
+	if (!ac_flag_call)
+	{
+		DEBUG_PRINTF("\n[!] Failed to look for ac_flag_call");
+		return false;
+	}
+	DEBUG_PRINTF(" 0x%p", ac_flag_call);
+	osu_ac_flag_original = reinterpret_cast<void *>(sed::rel2abs32(reinterpret_cast<void *>(ac_flag_call), 0x5));
+	DEBUG_PRINTF(" -> 0x%p", osu_ac_flag_original);
 
 	#define _OC_ADD_HOOK_INSTANCE(patchtype, from, to) \
 		_instances.push_back(std::make_unique<sed::mempatch_##patchtype##r32>(reinterpret_cast<void *>(from), reinterpret_cast<void *>(to)))
 	
+
+
 	hook_instances_t _instances;
 
-	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA,              CallWindowProcA_proxy);
-	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW,              CallWindowProcW_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA_target,       CallWindowProcA_proxy);
+	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW_target,       CallWindowProcW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,               SetWindowTextW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  gdi32full_SwapBuffers_target, gdi32full_SwapBuffers_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  osu_set_field_coords_target,  osu_set_field_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(call, cond_raw_coords,              osu_set_raw_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  cond_raw_coords + 5,          cond_raw_abs);
 	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                 GetCursorPos_proxy);
+	//_OC_ADD_HOOK_INSTANCE(call, ac_flag_call,                 osu_ac_flag_proxy);
 
 	#undef _OC_ADD_HOOK_INSTANCE
 

@@ -34,6 +34,7 @@ auto utils::beatmap::find_file_by_title(std::wstring_view title) -> std::optiona
 	return std::nullopt;
 }
 
+// Traverses the beatmap file for a specific section
 static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) -> char *
 {
 	const auto tag_len = strlen(tag);
@@ -52,6 +53,21 @@ static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) ->
 				return &buffer[i + 4];
 		}
 	} while (++buffer + tag_len < end);
+
+	return nullptr;
+}
+
+static auto beatmap_next_item(char * current, char * end) -> char *
+{
+	// The +4 is to make sure we have room to check for \r\n\r\n and other characters
+	while (current + 4 <= end)
+	{
+		if (*current == '\0' || *current == '[' || *reinterpret_cast<const std::uint32_t *>(current) == *reinterpret_cast<const std::uint32_t *>("\r\n\r\n"))
+			return nullptr;
+
+		if (*reinterpret_cast<const std::uint16_t *>(current) == *reinterpret_cast<const std::uint16_t *>("\r\n"))
+			return current + 2;
+	}
 
 	return nullptr;
 }

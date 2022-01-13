@@ -22,8 +22,14 @@ namespace sdk
 		vec2 coords;
 		int time;
 		hit_type type;
-		int hitsound; // will prolly leave this out cause not needed
-		// objectParams
-		// hitSamples
+		int hitsound;
+
+		//union _dummytype_objectParams
+		//{
+		//} object_params;
+		//
+		//union _dummytype_hitSample
+		//{
+		//} hit_sample;
 	};
 }
