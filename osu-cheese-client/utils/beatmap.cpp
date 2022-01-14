@@ -60,13 +60,15 @@ static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) ->
 static auto beatmap_next_item(char * current, char * end) -> char *
 {
 	// The +4 is to make sure we have room to check for \r\n\r\n and other characters
-	while (current + 4 <= end)
+	while (current + 2 <= end)
 	{
-		if (*current == '\0' || *current == '[' || *reinterpret_cast<const std::uint32_t *>(current) == *reinterpret_cast<const std::uint32_t *>("\r\n\r\n"))
+		if (*current == '\0' || *current == '[' || *reinterpret_cast<const std::uint16_t *>(current) == *reinterpret_cast<const std::uint16_t *>("\n\n"))
 			return nullptr;
 
-		if (*reinterpret_cast<const std::uint16_t *>(current) == *reinterpret_cast<const std::uint16_t *>("\r\n"))
-			return current + 2;
+		if (*current == '\n')
+			return current + 1;
+
+		++current;
 	}
 
 	return nullptr;
@@ -74,9 +76,6 @@ static auto beatmap_next_item(char * current, char * end) -> char *
 
 static auto beatmap_next_object(char *& buffer, char * end) -> bool
 {
-	constexpr auto match = "\r\n";
-	constexpr auto len   = sed::str_len(match);
-
 	while (buffer + 3 < end)
 	{
 		if (*buffer == '\n')
@@ -128,6 +127,32 @@ auto utils::beatmap::dump_hitobjects_from_file(std::filesystem::path file, std::
 	auto eob = buffer.get() + len;
 
 	fstr.read(buffer.get(), len);
+
+	// HACK: test
+	//{
+	//	auto _infotag = beatmap_traverse_tag("Metadata", buffer.get(), eob);
+	//
+	//	if (_infotag)
+	//	{
+	//		do
+	//		{
+	//			char _infobuff[256] { '\0' };
+	//			
+	//			char * pib = _infobuff;
+	//			const char * pinf = _infotag;
+	//			
+	//			while (pinf[0] != '\n')
+	//			{
+	//				*pib = *pinf;
+	//				++pib;
+	//				++pinf;
+	//			}
+	//
+	//			DEBUG_PRINTF("\n[TAG] %s - %x", _infobuff, *(pinf + 1));
+	//		}
+	//		while (_infotag = beatmap_next_item(_infotag, eob));
+	//	}
+	//}
 
 	auto current = beatmap_traverse_tag("HitObjects", buffer.get(), eob);
 	if (!current)

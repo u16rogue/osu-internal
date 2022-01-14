@@ -69,7 +69,7 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 		jnz LBL_CWP_SKIP_ORIGINAL
 		pop eax
 		test al, al
-		jz LBL_CWP_VARIANT_A
+		jnz LBL_CWP_VARIANT_A
 
 	LBL_CWP_VARIANT_W:
 		mov eax, CallWindowProcA_target
