@@ -39,6 +39,9 @@ static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) ->
 {
 	const auto tag_len = strlen(tag);
 
+	if (buffer + tag_len > end)
+		return nullptr;
+
 	do
 	{
 		if (*buffer != '[')
@@ -57,9 +60,10 @@ static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) ->
 	return nullptr;
 }
 
+// Moves to the next item for the current section
 static auto beatmap_next_item(char * current, char * end) -> char *
 {
-	// The +4 is to make sure we have room to check for \r\n\r\n and other characters
+	// The +2 is to make sure we have room to check for \r\n\r\n and other characters
 	while (current + 2 <= end)
 	{
 		if (*current == '\0' || *current == '[' || *reinterpret_cast<const std::uint16_t *>(current) == *reinterpret_cast<const std::uint16_t *>("\n\n"))
@@ -74,6 +78,20 @@ static auto beatmap_next_item(char * current, char * end) -> char *
 	return nullptr;
 }
 
+// Looks for a tagged item in the current section
+static auto beatmap_find_tagged_item(const char * item_tag, char * current, char * end) -> char *
+{
+	do
+	{
+		// TODO: replace this as this does not check for end but not necessary for now since all tags are in the upper place not in the end
+		if (auto now = sed::str_starts_with(current, item_tag); now && now[0] == ':')
+			return const_cast<char *>(now + 1);
+	} while (current = beatmap_next_item(current, end));
+
+	return nullptr;
+}
+
+// TODO: rework this
 static auto beatmap_next_object(char *& buffer, char * end) -> bool
 {
 	while (buffer + 3 < end)
@@ -91,6 +109,7 @@ static auto beatmap_next_object(char *& buffer, char * end) -> bool
 }
 
 // WARNING: only used for parsing HitObjects, not meant for anything else
+// TODO: rework this
 static auto beatmap_parse_item(char *& buffer, char * end, int & out_value) -> bool
 {
 	for (; buffer < end; ++buffer)
@@ -129,30 +148,26 @@ auto utils::beatmap::dump_hitobjects_from_file(std::filesystem::path file, std::
 	fstr.read(buffer.get(), len);
 
 	// HACK: test
-	//{
-	//	auto _infotag = beatmap_traverse_tag("Metadata", buffer.get(), eob);
-	//
-	//	if (_infotag)
-	//	{
-	//		do
-	//		{
-	//			char _infobuff[256] { '\0' };
-	//			
-	//			char * pib = _infobuff;
-	//			const char * pinf = _infotag;
-	//			
-	//			while (pinf[0] != '\n')
-	//			{
-	//				*pib = *pinf;
-	//				++pib;
-	//				++pinf;
-	//			}
-	//
-	//			DEBUG_PRINTF("\n[TAG] %s - %x", _infobuff, *(pinf + 1));
-	//		}
-	//		while (_infotag = beatmap_next_item(_infotag, eob));
-	//	}
-	//}
+	{
+		auto _infotag = beatmap_traverse_tag("Metadata", buffer.get(), eob);
+	
+		if (_infotag)
+		{
+			auto title = beatmap_find_tagged_item("Title", _infotag, eob);
+			if (title)
+			{
+				char a[256] { '\0' };
+				char * b = a;
+				while (*title != '\n')
+				{
+					*b = *title;
+					++b;
+					++title;
+				}
+				DEBUG_PRINTF("\n[TITLE] %s", a);
+			}
+		}
+	}
 
 	auto current = beatmap_traverse_tag("HitObjects", buffer.get(), eob);
 	if (!current)
