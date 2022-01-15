@@ -63,7 +63,7 @@ static auto beatmap_traverse_tag(const char * tag, char * buffer, char * end) ->
 // Moves to the next item for the current section
 static auto beatmap_next_item(char * current, char * end) -> char *
 {
-	// The +2 is to make sure we have room to check for \r\n\r\n and other characters
+	// The +2 is to make sure we have room to check for \n\n and other characters
 	while (current + 2 <= end)
 	{
 		if (*current == '\0' || *current == '[' || *reinterpret_cast<const std::uint16_t *>(current) == *reinterpret_cast<const std::uint16_t *>("\n\n"))
@@ -83,8 +83,8 @@ static auto beatmap_find_tagged_item(const char * item_tag, char * current, char
 {
 	do
 	{
-		// TODO: replace this as this does not check for end but not necessary for now since all tags are in the upper place not in the end
-		if (auto now = sed::str_starts_with(current, item_tag); now && now[0] == ':')
+		// WARNING: replace this as this does not check for end but not necessary for now since all tags are in the upper place not in the end
+		if (auto now = sed::str_starts_with(current, item_tag); now && *now == ':')
 			return const_cast<char *>(now + 1);
 	} while (current = beatmap_next_item(current, end));
 

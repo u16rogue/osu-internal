@@ -5,16 +5,27 @@
 
 namespace sdk
 {
+	// osu!master\osu!\GameplayElements\HitObjects\HitObjectBase.cs
 	enum class hit_type : std::uint8_t
 	{
-		HIT_CIRCLE = 1 << 0,
-		SLIDER     = 1 << 1,
-		NEW_COMBO  = 1 << 2,
-		SPINNER    = 1 << 3,
-		COMBOSPEC  = 0b01110000,
-		MANIA_HOLD = 1 << 7,
+		Normal = 1,
+		Slider = 2,
+		NewCombo = 4,
+		NormalNewCombo = 5,
+		SliderNewCombo = 6,
+		Spinner = 8,
+		ColourHax = 112,
+		Hold = 128,
+		ManiaLong = 128
+	};
 
-		MASK_SHOULD_AIMASSIST = HIT_CIRCLE | SLIDER
+	enum class sound_type : std::uint8_t
+	{
+		None = 0,
+		Normal = 1,
+		Whistle = 2,
+		Finish = 4,
+		Clap = 8
 	};
 
 	struct hit_object
