@@ -3,6 +3,8 @@
 #include <cstdint>
 #include "osu_vec.hpp"
 
+// TODO: cleanup
+
 namespace sdk
 {
 	// osu!master\osu!\GameplayElements\HitObjects\HitObjectBase.cs
@@ -33,7 +35,7 @@ namespace sdk
 		vec2 coords;
 		int time;
 		hit_type type;
-		int hitsound;
+		sound_type hitsound;
 
 		//union _dummytype_objectParams
 		//{
