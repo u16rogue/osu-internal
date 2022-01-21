@@ -36,14 +36,15 @@ auto game::initialize() -> bool
 		{
 			DWORD pid { 0 };
 			GetWindowThreadProcessId(hwnd, &pid);
-			wchar_t title_buffer[MAX_PATH] { 0 };
-			wchar_t class_buffer[MAX_PATH] { 0 }; // can just reuse the buffer
+			wchar_t text_buffer[MAX_PATH] { 0 };
+			constexpr auto text_buffer_sz = ARRAYSIZE(text_buffer);
+
 			if (pid != GetCurrentProcessId()
-			|| !GetWindowTextW(hwnd, title_buffer, ARRAYSIZE(title_buffer))
-			|| !sed::str_starts_with(title_buffer, L"osu!")
+			|| !GetWindowTextW(hwnd, text_buffer, text_buffer_sz)
+			|| !sed::str_starts_with(text_buffer, L"osu!")
 			// dumb fix for debug console
-			|| !RealGetWindowClassW(hwnd, class_buffer, ARRAYSIZE(class_buffer))
-			|| sed::str_starts_with(class_buffer, L"Console")
+			|| !RealGetWindowClassW(hwnd, text_buffer, text_buffer_sz)
+			|| sed::str_starts_with(text_buffer, L"Console")
 			) {
 				return TRUE;
 			}

@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <sed/macro.hpp>
+#include <sed/windows/smart_handle.hpp>
 
 #include "game.hpp"
 #include "features/features.hpp"
@@ -20,7 +21,7 @@ auto oc::menu::render() -> void
 	ImGui::Begin("osu!");
 
 	if (ImGui::Button("Unload"))
-		CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr);
+		sed::smart_handle(CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr));
 
 	ImGui::SameLine();
 	ImGui::Text("[PAUSE] Key to toggle menu.");

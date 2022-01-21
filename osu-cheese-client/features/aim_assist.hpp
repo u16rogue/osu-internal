@@ -27,7 +27,7 @@ namespace features
 		inline static float dir_fov         = 20.f;
 		inline static float safezone        = 20.f;
 		inline static float scaleassist     = 1.f;
-		inline static float timeoffsetratio = 0.f;
+		inline static float timeoffsetratio = 0.8f;
 
 		// Visuals settings
 		inline static bool vis_fov         = false;
