@@ -7,7 +7,8 @@
 #include "../sdk/osu_vec.hpp"
 
 #include "../manager/gamefield_manager.hpp"
-#include "../manager/beatmap_manager.hpp"
+
+#include <algorithm>
 
 auto features::aim_assist::on_tab_render() -> void
 {
@@ -69,65 +70,9 @@ auto features::aim_assist::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM
 	return false;
 }
 
-// HACK: DEBUG CODE! REMOVE!
-static auto _dbg_outline_txt(ImDrawList * draw, ImVec2 pos, std::string_view txt) -> void
-{
-	// LT
-	draw->AddText(ImVec2(pos.x - 1.f, pos.y - 1.f), 0xFF000000, txt.data());
-	// RT
-	draw->AddText(ImVec2(pos.x + 1.f, pos.y - 1.f), 0xFF000000, txt.data());
-	// LB
-	draw->AddText(ImVec2(pos.x - 1.f, pos.y + 1.f), 0xFF000000, txt.data());
-	// RB
-	draw->AddText(ImVec2(pos.x + 1.f, pos.y + 1.f), 0xFF000000, txt.data());
-
-	// original
-	draw->AddText(pos, 0xFFFFFFFF, txt.data());
-}
-
-static sdk::vec2 _dbg_curve_point;
-
 auto features::aim_assist::on_render() -> void
 {
-	// HACK: DEBUG CODE! REMOVE!
-
-	#if 1
-	std::string _dbg_txt_info = "";
-	auto [_ho, _i] = manager::beatmap::get_coming_hitobject();
-	auto _draw = ImGui::GetBackgroundDrawList();
-	// Visualize player direction
-	_draw->AddLine(game::pp_viewpos_info->pos, (game::pp_viewpos_info->pos + (player_direction * 80.f)), 0xFFFFFFFF, 4.f);
-	// Velocity
-	_dbg_txt_info.append("Sample velocity: " + std::to_string(velocity));
-
-	// Draw degree towards ho
-	if (_ho)
-	{
-		auto pp = player_direction.from_norm_to_deg();
-		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp - dir_fov, 80.f), 0xFFFFFFFF, 4.f);
-		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(pp + dir_fov, 80.f), 0xFFFFFFFF, 4.f);
-
-		auto dir_len = player_direction.magnitude();
-		
-		ImU32 col = 0xFF0000FF;
-		auto ang = player_direction.vec2vec_angle(game::pp_viewpos_info->pos.normalize_towards(_ho->coords.field_to_view())); 
-		if (ang <= dir_fov)
-		{
-			col = 0xFFFF0000;
-		}
-		
-		_draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward_towards(_ho->coords.field_to_view(), 80.f), col, 4.f);
-		_dbg_txt_info.append("\nAngle to HO: " + std::to_string(ang));
-	}
-	// Draw debug text
-	_dbg_outline_txt(_draw, game::pp_viewpos_info->pos, _dbg_txt_info);
-
-	// Curve point
-	if (method == method_e::DIRECTIONAL_CURVE)
-		_draw->AddCircleFilled(_dbg_curve_point.field_to_view(), 3.f, 0xFF0000FF);
-	#endif
-
-	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
+	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
 		return;
 
 	auto draw = ImGui::GetBackgroundDrawList();
@@ -135,12 +80,12 @@ auto features::aim_assist::on_render() -> void
 	if (vis_fov)
 		draw->AddCircle(game::pp_viewpos_info->pos, fov, 0xFFFFFFFF);
 
-	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return;
 
 	if (vis_safezonefov)
-		draw->AddCircle(ho->coords.field_to_view(), safezone, 0xFFFFFFFF);
+		draw->AddCircle(ho->position.field_to_view(), safezone, 0xFFFFFFFF);
 
 }
 
@@ -153,10 +98,10 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		last_tick_point = *raw_coords;
 	}
 
-	if (!enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return;
 
@@ -164,24 +109,24 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (timeoffsetratio != 0.f && i != 0)
 	{
 		auto prev = ho - 1;
-		auto time_sub = ho->time - ((ho->time - prev->time) * (1.f - timeoffsetratio));
+		auto time_sub = ho->time.start - ((ho->time.start - prev->time.end) * (1.f - timeoffsetratio));
 		if (game::p_game_info->beat_time < time_sub)
 			return;
 	}
 
 	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
-	auto dist_to_ho = player_field_pos.distance(ho->coords);
+	auto dist_to_ho = player_field_pos.distance(ho->position);
 
 	// Check fov
 	if (fov != 0.f && dist_to_ho > fov)
 		return;
 
 	// Check direction
-	if (dir_fov != 0.f && player_direction.vec2vec_angle(player_field_pos.normalize_towards(ho->coords)) > dir_fov)
+	if (dir_fov != 0.f && player_direction.vec2vec_angle(player_field_pos.normalize_towards(ho->position)) > dir_fov)
 		return;
 
 	// Check if we're at the same point
-	if (player_field_pos == ho->coords)
+	if (player_field_pos == ho->position)
 		return;
 
 	// Safezone override
@@ -194,13 +139,13 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	{
 		case method_e::LINEAR:
 		{
-			target = ho->coords;
+			target = ho->position;
 			break;
 		}
 
 		case method_e::DIRECTIONAL_CURVE:
 		{
-			auto p2ho_p = player_field_pos.forward_towards(ho->coords, dist_to_ho * mdc_ho_ratio);
+			auto p2ho_p = player_field_pos.forward_towards(ho->position, dist_to_ho * mdc_ho_ratio);
 			auto p2dir_p = player_field_pos.forward(player_direction, dist_to_ho * mdc_pdir_ratio);
 
 			sdk::vec2 start, end;
@@ -227,7 +172,6 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 			}
 
 			target = start.forward_towards(end, start.distance(end) * mdc_midpoint_ratio);
-			_dbg_curve_point = target;
 			break;
 		}
 

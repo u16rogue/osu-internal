@@ -79,6 +79,9 @@ namespace sdk
 		char pad1[0x4];
 	public:
 		std::uint32_t count;
+
+	public:
+		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
 	};
 
 	struct ho_1

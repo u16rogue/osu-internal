@@ -4,7 +4,7 @@
 #include <sed/macro.hpp>
 
 #include "../game.hpp"
-#include "../manager/beatmap_manager.hpp"
+#include <string>
 
 auto features::esp::on_tab_render() -> void
 {
@@ -28,10 +28,10 @@ auto features::esp::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 auto features::esp::on_render() -> void
 {
-	if (!game::pp_info_player->async_complete || !manager::beatmap::loaded() || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (!game::pp_info_player->async_complete || !game::pp_phitobject || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return;
 
@@ -39,16 +39,16 @@ auto features::esp::on_render() -> void
 	std::string esptxt; 
 
 	if (timer)
-		esptxt.append("TIME: " + std::to_string(ho->time - game::p_game_info->beat_time) + "\n");
+		esptxt.append("TIME: " + std::to_string(ho->time.start - game::p_game_info->beat_time) + "\n");
 
 	if (distance)
-		esptxt.append("DST: " + std::to_string(ho->coords.distance(game::pp_viewpos_info->pos.view_to_field())) + "\n");
+		esptxt.append("DST: " + std::to_string(ho->position.distance(game::pp_viewpos_info->pos.view_to_field())) + "\n");
 
 	if (tracer)
-		draw->AddLine(game::pp_viewpos_info->pos, ho->coords.field_to_view(), 0xFFFFFFFF);
+		draw->AddLine(game::pp_viewpos_info->pos, ho->position.field_to_view(), 0xFFFFFFFF);
 
 	if (!esptxt.empty())
-		draw->AddText(ho->coords.field_to_view(), 0xFFFFFFFF, esptxt.c_str());
+		draw->AddText(ho->position.field_to_view(), 0xFFFFFFFF, esptxt.c_str());
 }
 
 auto features::esp::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void

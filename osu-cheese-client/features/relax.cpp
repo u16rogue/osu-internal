@@ -4,8 +4,6 @@
 
 #include <sed/macro.hpp>
 #include "../sdk/osu_vec.hpp"
-#include "../sdk/osu_file.hpp"
-#include "../manager/beatmap_manager.hpp"
 #include "../game.hpp"
 
 auto features::relax::on_tab_render() -> void
@@ -27,19 +25,19 @@ auto features::relax::on_tab_render() -> void
 
 auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool
 {
-	static const sdk::hit_object * filter_ho = nullptr;
+	static const void * filter_ho = nullptr;
 
-	if (Msg != WM_MOUSEMOVE || !enable || !manager::beatmap::loaded() || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+	if (Msg != WM_MOUSEMOVE || !enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
 
-	auto [ho, i] = manager::beatmap::get_coming_hitobject();
+	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return false;
 
 	if (offset >= 0)
 		--ho;
 
-	if (ho->time + offset <= game::p_game_info->beat_time || ho == filter_ho)
+	if (ho->time.start + offset <= game::p_game_info->beat_time || ho == filter_ho)
 		return false;
 
 	filter_ho = ho;

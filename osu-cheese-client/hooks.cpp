@@ -6,10 +6,8 @@
 #include <sed/macro.hpp>
 #include <sed/memory.hpp>
 #include <sed/strings.hpp>
-#include "utils/beatmap.hpp"
 
 #include "manager/gamefield_manager.hpp"
-#include "manager/beatmap_manager.hpp"
 
 #include <GL/gl3w.h>
 #include <imgui_impl_opengl3.h>
@@ -154,32 +152,14 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 
 static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 {
-	auto beatmap = sed::str_starts_with(lpString, L"osu!");
-	
-	if (!beatmap)
+	if (!sed::str_starts_with(lpString, L"osu!"))
 		return;
-
-	beatmap = sed::str_starts_with(beatmap, L"  - ");
-	if (!beatmap)
-	{
-		manager::beatmap::unload();
-		DEBUG_PRINTF("\n[D] Unloaded beatmap!");
-		return;
-	}
-
-	auto bm_file = utils::beatmap::find_file_by_title(beatmap);
-	if (!bm_file)
-	{
-		DEBUG_PRINTF("\n[!] Failed to load beatmap!");
-		return;
-	}
 
 	// TODO: dynamically load these values, we already have the sig stop being lazy.
 	RECT wr {};
 	GetClientRect(hWnd, &wr);
 	
 	manager::game_field::resize(wr.right, wr.bottom);
-	manager::beatmap::load(*bm_file);
 }
 
 static decltype(SetWindowTextW) * SetWindowTextW_target = SetWindowTextW;

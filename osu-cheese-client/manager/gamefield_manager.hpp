@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tuple>
-#include "../sdk/osu_file.hpp"
 #include "../sdk/osu_vec.hpp"
 
 namespace manager

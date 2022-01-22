@@ -15,13 +15,8 @@ add_library(osu-cheese-client SHARED
 	"sdk/osu_vec.cpp"
 	"manager/gamefield_manager.hpp"
 	"manager/gamefield_manager.cpp"
-	"utils/beatmap.hpp"
-	"utils/beatmap.cpp"
-	"sdk/osu_file.hpp"
 	"menu.hpp"
 	"menu.cpp"
-	"manager/beatmap_manager.hpp"
-	"manager/beatmap_manager.cpp"
 	"features/aim_assist.hpp"
 	"features/aim_assist.cpp"
 	"features/relax.hpp"
@@ -36,6 +31,7 @@ add_library(osu-cheese-client SHARED
 	"oc_client.cpp"
 	"sdk/player_keys.hpp"
 	"sdk/hitobject.hpp"
+	"sdk/hitobject.cpp"
 )
 
 set_target_properties(osu-cheese-client PROPERTIES LINKER_LANGUAGE CXX)
