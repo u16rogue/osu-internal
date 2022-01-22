@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "osu_vec.hpp"
+#include <sed/memory.hpp>
 
 namespace sdk
 {
@@ -30,6 +31,14 @@ namespace sdk
 
 	struct hitobject
 	{
+	private:
+		// The 0xC is from a register but seems to be constant, perhaps this is due
+		// to not being able to encode 0x10 into the move instruction while only being
+		// able to encode 0x4.
+		// mov esi, [eax+ecx+0x04] where EAX is 0xC
+		char pad[0x4 + 0xC];
+
+	public:
 		struct
 		{
 			std::int32_t start;
@@ -49,4 +58,54 @@ namespace sdk
 		std::int32_t stack_count;
 		std::int32_t last_in_combo;
 	};
+
+	struct ho_array
+	{
+	private:
+		char pad[0x8];
+	public:
+		// Array of 4 byte pointers
+		// mov ecx,[eax+ebx*4+08]
+		hitobject * hitobjects[];
+	};
+
+	struct ho_vector
+	{
+	private:
+		char pad[0x4];
+	public:
+		ho_array * container;
+	private:
+		char pad1[0x4];
+	public:
+		std::uint32_t count;
+	};
+
+	struct ho_1
+	{
+	private:
+		// 0x44 is in register EAX but seems to be constant
+		// mov ecx,[eax+ecx+0x04]
+		char pad[0x04 + 0x44];
+	public:
+		ho_vector * ho_vec;
+	};
+
+	struct ho_2
+	{
+	private:
+		char pad[0x3C];
+	public:
+		ho_1 * ho1;
+	};
+
+	struct hitobject_pointer
+	{
+	private:
+		char pad[0x60];
+	public:
+		ho_2 * ho2;
+	};
+
+	class pp_phitobject_t : public sed::basic_ptrptr<hitobject_pointer> {};
 }
