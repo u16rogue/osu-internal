@@ -82,6 +82,8 @@ namespace sdk
 
 	public:
 		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
+		auto begin() -> hitobject *;
+		auto end() -> hitobject *;
 	};
 
 	struct ho_1
@@ -110,5 +112,16 @@ namespace sdk
 		ho_2 * ho2;
 	};
 
-	class pp_phitobject_t : public sed::basic_ptrptr<hitobject_pointer> {};
+	class pp_phitobject_t : public sed::basic_ptrptr<hitobject_pointer>
+	{
+	public:
+		auto begin() -> hitobject *;
+		auto end() -> hitobject *;
+
+		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
+		auto count() -> std::uint32_t;
+
+		auto operator[](int index) -> hitobject *;
+		operator bool() const noexcept;
+	};
 }

@@ -31,7 +31,7 @@ auto features::esp::on_render() -> void
 	if (!game::pp_info_player->async_complete || !game::pp_phitobject || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
+	auto [ho, i] = game::pp_phitobject.get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return;
 

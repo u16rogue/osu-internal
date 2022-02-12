@@ -8,23 +8,53 @@
 #include <sed/strings.hpp>
 
 #include "manager/gamefield_manager.hpp"
-
 #include <GL/gl3w.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
 #include <imgui.h>
-
 #include "game.hpp"
 #include "menu.hpp"
-
 #include "features/features.hpp"
 
 #if 0
-static auto CALLBACK WindowProc_hook( _In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
+static auto CALLBACK WindowProc_hook(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
 {
-	return TRUE;
+	if (uMsg == WM_MOUSEMOVE)
+	{
+		DEBUG_PRINTF("\nlol");
+	}
+
+	if (oc::menu::wndproc(hwnd, uMsg, wParam, lParam) || features::dispatcher::on_wndproc(hwnd, uMsg, wParam, lParam, nullptr))
+		return TRUE;
+
+	return FALSE;
+}
+
+static void * WindowProc_original { nullptr };
+static auto __attribute__((naked)) WindowProc_proxy(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
+{
+	__asm
+	{
+		push eax
+		push [ebp+20]
+		push [ebp+16]
+		push [ebp+12]
+		push [ebp+8]
+		call WindowProc_hook
+		test al, al
+		jnz LBL_WP_SKIP_ORIGINAL
+	LBL_WP_CALL_ORIGINAL:
+		pop eax
+		push WindowProc_original // lol
+		ret
+	LBL_WP_SKIP_ORIGINAL:
+		pop eax
+		ret
+	}
 }
 #endif
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 enum class CallWindowProc_variant : int
 {
@@ -108,6 +138,8 @@ static auto __attribute__((naked)) CallWindowProcA_proxy(WNDPROC lpPrevWndFunc, 
 	};
 }
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 static auto WINAPI gdi32full_SwapBuffers_hook(HDC hdc) -> void
 {
 	if (static bool init = true; init)
@@ -150,6 +182,8 @@ static auto __attribute__((naked)) gdi32full_SwapBuffers_proxy(HDC hdc) -> BOOL
 	}
 }
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 static auto WINAPI SetWindowTextW_hook(HWND hWnd, LPCWSTR lpString) -> void
 {
 	if (!sed::str_starts_with(lpString, L"osu!"))
@@ -174,11 +208,13 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 		push [ebp+8]
 		call SetWindowTextW_hook
 		
-		mov eax, SetWindowTextW_target // we cant do load effective address because clang (msvc?) does some funny things like using the ecx register causing the ctx to get corrupted
-		lea eax, [eax + 5]
+		mov eax, SetWindowTextW_target // we cant do load effective address because clang (msvc?) does some funny
+		lea eax, [eax + 5]			   // things like using the ecx register causing the ctx to get corrupted
 		jmp eax
 	}
 }
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl
 static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
@@ -199,6 +235,8 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 		ret 8
 	}
 }
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
@@ -225,6 +263,8 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 	};
 }
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 // TODO: we can just hook the function that handles this instead so we don't have to check the return address
 static decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
 static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
@@ -239,7 +279,7 @@ static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 		MODULEINFO mi {};
 
 		if (!hmod || !GetModuleInformation(GetCurrentProcess(), hmod, &mi, sizeof(mi))) // TODO: handle this properly
-			TerminateProcess(GetCurrentProcess(), 1);
+			return false; // TerminateProcess(GetCurrentProcess(), 1);
 
 		wnform_start = mi.lpBaseOfDll;
 		wnform_end = reinterpret_cast<void *>(std::uintptr_t(mi.lpBaseOfDll) + mi.SizeOfImage);
@@ -293,6 +333,8 @@ static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
 	}
 }
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 void * osu_ac_flag_original { nullptr };
 static auto __stdcall osu_ac_flag() -> void
 {
@@ -307,6 +349,8 @@ static auto __attribute__((naked)) osu_ac_flag_proxy() -> void
 		jmp osu_ac_flag_original
 	};
 }
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using hook_instances_t = std::vector<std::unique_ptr<sed::mempatch_interface>>;
 static hook_instances_t hook_instances;
@@ -327,7 +371,7 @@ auto hooks::install() -> bool
 
 	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
-	void * osu_set_field_coords_target = reinterpret_cast<void *>(sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04\xd9\x44", "xxx?xxxx?xxxx?xx"));
+	auto osu_set_field_coords_target = sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04\xd9\x44", "xxx?xxxx?xxxx?xx");
 	if (!osu_set_field_coords_target)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_field_coords!");
@@ -361,11 +405,23 @@ auto hooks::install() -> bool
 	osu_ac_flag_original = reinterpret_cast<void *>(sed::rel2abs32(reinterpret_cast<void *>(ac_flag_call), 0x5));
 	DEBUG_PRINTF(" -> 0x%p", osu_ac_flag_original);
 
+	#if 0
+	// WindowProc
+	DEBUG_PRINTF("\n[+] Loading WindowProcedure...");
+	auto wp = GetWindowLongPtrA(game::hwnd, GWLP_WNDPROC);
+	DEBUG_PRINTF(" 0x%p", wp);
+	auto wp_jmp = wp + 5;
+	DEBUG_PRINTF(" -> rel(0x%p)", *reinterpret_cast<void **>(wp_jmp + 1));
+	WindowProc_original = reinterpret_cast<void *>(sed::rel2abs32(reinterpret_cast<void *>(wp_jmp), 0x5));
+	DEBUG_PRINTF(" -> abs(0x%p)", WindowProc_original);
+	#endif
+
 	#define _OC_ADD_HOOK_INSTANCE(patchtype, from, to) \
 		_instances.push_back(std::make_unique<sed::mempatch_##patchtype##r32>(reinterpret_cast<void *>(from), reinterpret_cast<void *>(to)))
 
 	hook_instances_t _instances;
 
+	//_OC_ADD_HOOK_INSTANCE(jmp,  wp_jmp,                       WindowProc_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA_target,       CallWindowProcA_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW_target,       CallWindowProcW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,               SetWindowTextW_proxy);

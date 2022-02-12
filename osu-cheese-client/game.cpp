@@ -67,6 +67,6 @@ auto game::initialize() -> bool
 	) {
 		return false;
 	}
-
+	
 	return true;
 }

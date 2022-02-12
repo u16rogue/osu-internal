@@ -30,7 +30,7 @@ auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 	if (Msg != WM_MOUSEMOVE || !enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return false;
 
-	auto [ho, i] = game::pp_phitobject->ho2->ho1->ho_vec->get_coming_hitobject(game::p_game_info->beat_time);
+	auto [ho, i] = game::pp_phitobject.get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return false;
 
