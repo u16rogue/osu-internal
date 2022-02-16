@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <Psapi.h>
 #include <memory>
+#include <array>
 #include "windows/protect_guard.hpp"
 
 namespace sed
@@ -80,10 +81,61 @@ namespace sed
 
 	using mempatch_jmpr32  = basic_mempatch_op1r32<0xE9>;
 	using mempatch_callr32 = basic_mempatch_op1r32<0xE8>; 
+	
+	[[deprecated("Use compile time IDA pattern scanner")]] auto pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
+	[[deprecated("Use compile time IDA pattern scanner")]] auto pattern_scan_exec_region(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
 
-	// TODO: consteval ida style pattern generator
-	auto pattern_scan(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
-	auto pattern_scan_exec_region(void * start_, std::size_t size, const char * pattern, const char * mask) -> std::uintptr_t;
+	// https://gist.github.com/u16rogue/2aaa024c9824d6fcf1fc22f89b508bdc :D
+
+	struct pattern_fragment
+	{
+		unsigned char byte;
+		bool masked;
+	};
+
+	template <int len> requires (len % 3 == 0)
+	struct ida_pattern
+	{
+		consteval ida_pattern(const char (& pattern)[len])
+		{
+			for (int i = 0; i < len / 3; ++i)
+			{
+				auto chunk = &pattern[i * 3];
+				auto char_to_nibble = [](const char c) -> unsigned char
+				{
+					if (c == '?')
+						return 0;
+
+					if (c >= '0' && c <= '9')
+						return c - '0';
+					else if (c >= 'A' && c <= 'F')
+						return c - 'A' + 0xA;
+					else if (c >= 'a' && c <= 'f')
+						return c - 'a' + 0xa;
+
+					return 0;
+				};
+
+				unsigned char byte = char_to_nibble(chunk[0]) << 4 | char_to_nibble(chunk[1]);
+
+				fragments[i] = {
+					.byte = byte,
+					.masked = chunk[0] != '?'
+				};
+			}
+		}
+
+		std::array<pattern_fragment, len / 3> fragments {};
+	};
+
+	// Implementation, do not use.
+	auto _impl_pattern_scan(const pattern_fragment * fragments, int count) -> void *;
+
+	template <ida_pattern pattern, typename T>
+	auto pattern_scan(/*vargs_t... offsets*/) -> T *
+	{
+		return reinterpret_cast<T *>(_impl_pattern_scan(pattern.fragments.data(), pattern.fragments.size()));
+	}
 
 	template <class data>
 	class basic_ptrptr

@@ -92,3 +92,40 @@ auto sed::pattern_scan_exec_region(void * start_, std::size_t size, const char *
 
 	return 0;
 }
+
+auto sed::_impl_pattern_scan(const pattern_fragment * fragments, int count) -> void *
+{
+	std::uint8_t * current = nullptr;
+
+	MEMORY_BASIC_INFORMATION mbi { 0 };
+	while (VirtualQuery(current, &mbi, sizeof(mbi)))
+	{
+		constexpr DWORD any_execute = PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+		if (mbi.State != MEM_COMMIT || !(mbi.Protect & any_execute))
+		{
+			current += mbi.RegionSize;
+			continue;
+		}
+
+		for (auto pscan = current, end = current + mbi.RegionSize - count; pscan < end; ++pscan)
+		{
+			for (int i = 0; i < count; ++i)
+			{
+				const auto & frag = fragments[i];
+
+				if (!frag.masked)
+					continue;
+
+				if (frag.byte != pscan[i])
+					break;
+
+				if (i == count - 1)
+					return pscan;
+			}
+		}
+
+		current += mbi.RegionSize;
+	}
+
+	return nullptr;
+}

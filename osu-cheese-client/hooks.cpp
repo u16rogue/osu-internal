@@ -393,6 +393,11 @@ auto hooks::install() -> bool
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
+	// TODO: mouse thing
+	// Mouse get position
+	//DEBUG_PRINTF("\n[+] Searching for mouse.get_Position");
+	//auto mouse_get_position_target = sed::pattern_scan_exec_region();
+
 	// Anticheat flag - credits! https://github.com/SweetDreamzZz/osuauth-denbai-checker
 	DEBUG_PRINTF("\n[+] Searching for ac_flag_call...");
 	auto ac_flag_call = sed::pattern_scan_exec_region(nullptr, - 1, "\xE8\x00\x00\x00\x00\x83\xC4\x00\x89\x45\x00\x8B\x4D\x00\x8B\x11\x8B\x42\x00\x89\x45\x00\x0F\xB6\x4D", "x????xx?xx?xx?xxxx?xx?xxx"); // TODO: this doesn't necessarily need to be scanned through regions
