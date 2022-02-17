@@ -360,6 +360,8 @@ auto hooks::install() -> bool
 	DEBUG_PRINTF("\n[+] Installing hooks..."
 	             "\n[+] Importing gdi32full.SwapBuffers...");
 	
+	// TODO: port these signatures
+
 	// Swap buffers
 	gdi32full_SwapBuffers_target = reinterpret_cast<decltype(gdi32full_SwapBuffers_target)>(GetProcAddress(GetModuleHandleW(L"gdi32full.dll"), "SwapBuffers"));
 	if (!gdi32full_SwapBuffers_target)
@@ -371,7 +373,7 @@ auto hooks::install() -> bool
 
 	// Set Field coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_field_coords... ");
-	auto osu_set_field_coords_target = sed::pattern_scan_exec_region(nullptr, -1, "\x56\x83\xEC\x08\x8B\xF2\x8D\x41\x18\xD9\x00\xD9\x40\x04\xd9\x44", "xxx?xxxx?xxxx?xx");
+	auto osu_set_field_coords_target = sed::pattern_scan<"56 83 EC ?? 8B F2 8D 41 ?? D9 00 D9 40 ?? d9 44", void>();
 	if (!osu_set_field_coords_target)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_field_coords!");
@@ -381,14 +383,14 @@ auto hooks::install() -> bool
 
 	// Set raw input coordinates
 	DEBUG_PRINTF("\n[+] Searching for osu_set_raw_coords...");
-	auto cond_raw_coords = sed::pattern_scan_exec_region(nullptr, -1, "\x74\x00\x8b\x75\xCC\x83\xc6\x00\x8b\x45", "x?xx?xx?xx");
+	auto cond_raw_coords = sed::pattern_scan<"74 ?? 8b 75 ?? 83 c6 ?? 8b 45", std::uint8_t>();
 	if (!cond_raw_coords)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for osu_set_raw_coords!");
 		return false;
 	}
 	DEBUG_PRINTF(" 0x%p", cond_raw_coords);
-	auto cond_raw_rel8 = *reinterpret_cast<std::uint8_t *>(cond_raw_coords + 1);
+	auto cond_raw_rel8 = *(cond_raw_coords + 1);
 	DEBUG_PRINTF("\n[+] raw coords rel8 and abs -> 0x%x", cond_raw_rel8);
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
@@ -400,7 +402,7 @@ auto hooks::install() -> bool
 
 	// Anticheat flag - credits! https://github.com/SweetDreamzZz/osuauth-denbai-checker
 	DEBUG_PRINTF("\n[+] Searching for ac_flag_call...");
-	auto ac_flag_call = sed::pattern_scan_exec_region(nullptr, - 1, "\xE8\x00\x00\x00\x00\x83\xC4\x00\x89\x45\x00\x8B\x4D\x00\x8B\x11\x8B\x42\x00\x89\x45\x00\x0F\xB6\x4D", "x????xx?xx?xx?xxxx?xx?xxx"); // TODO: this doesn't necessarily need to be scanned through regions
+	auto ac_flag_call = sed::pattern_scan<"E8 ?? ?? ?? ?? 83 C4 ?? 89 45 ?? 8B 4D ?? 8B 11 8B 42 ?? 89 45 ?? 0F B6 4D", void>(); // TODO: this doesn't necessarily need to be scanned through regions
 	if (!ac_flag_call)
 	{
 		DEBUG_PRINTF("\n[!] Failed to look for ac_flag_call");
