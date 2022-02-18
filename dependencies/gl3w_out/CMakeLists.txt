@@ -2,14 +2,8 @@
 # Generate this dep by running: py gl3w_gen.py --root ../gl3w_out/
 
 cmake_minimum_required(VERSION 3.18)
-
-if (EXISTS './gl3w.c')
-	set(_GL3W_SRC_EXTENSION c)
-else()
-	set(_GL3W_SRC_EXTENSION cpp)
-endif ()
-
-add_library(gl3w STATIC "src/gl3w.${_GL3W_SRC_EXTENSION}")
+project(gl3w)
+add_library(gl3w STATIC "src/gl3w.c")
 
 set(gl3w-includes "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
-set_target_properties(gl3w PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(gl3w PROPERTIES LINKER_LANGUAGE C)
