@@ -55,6 +55,7 @@ auto game::initialize() -> bool
 
 		Sleep(800);
 	}
+
 	DEBUG_WPRINTF(L"0x%p", game::hwnd);
 
 	if (!pattern_scan_helper<"DB 05 ?? ?? ?? ?? D9 5D F8">                                              ("game::p_game_info",      game::p_game_info,          0x6)

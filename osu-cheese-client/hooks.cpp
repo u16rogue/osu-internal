@@ -83,14 +83,14 @@ static auto __attribute__((naked)) CallWindowProc_proxy(WNDPROC lpPrevWndFunc, H
 {
 	__asm
 	{
-		push ebp	 
+		push ebp
 		mov ebp, esp 
 		push eax     
 		push [ebp+24]
 		push [ebp+20]
 		push [ebp+16]
 		push [ebp+12]
-		push eax	 
+		push eax
 		call CallWindowProc_hook;
 		test al, al
 		jnz LBL_CWP_SKIP_ORIGINAL
