@@ -12,7 +12,7 @@
 		type name; \
 	};
 
-#if defined(OSU_CHEESE_DEBUG_BUILD) && OSU_CHEESE_DEBUG_BUILD
+#if defined(OSU_CHEESE_DEBUG_BUILD)
 	#include <cstdio>
 	#include <iostream>
 	#define DEBUG_PRINTF(fmt, ...) printf(fmt, __VA_ARGS__)

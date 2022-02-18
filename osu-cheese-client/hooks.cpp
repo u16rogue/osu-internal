@@ -1,7 +1,6 @@
 #include "hooks.hpp"
 
 #include <Windows.h>
-#include <windowsx.h>
 #include <tuple>
 #include <sed/macro.hpp>
 #include <sed/memory.hpp>

@@ -3,9 +3,13 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-add_library(gl3w
-	"src/gl3w.c"
-)
+if (EXISTS './gl3w.c')
+	set(_GL3W_SRC_EXTENSION c)
+else()
+	set(_GL3W_SRC_EXTENSION cpp)
+endif ()
+
+add_library(gl3w STATIC "src/gl3w.${_GL3W_SRC_EXTENSION}")
 
 set(gl3w-includes "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
 set_target_properties(gl3w PROPERTIES LINKER_LANGUAGE CXX)

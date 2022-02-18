@@ -12,7 +12,7 @@ auto oc::load() -> bool
 	sed::console::init();
 	#endif
 
-	DEBUG_PRINTF("\n[+] Initializing...");
+	DEBUG_PRINTF("\n[+] Initializing....");
 	if (!game::initialize() || !hooks::install())
 	{
 		DEBUG_PRINTF("\n[!] Initialization failed");

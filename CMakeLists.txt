@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(osu-cheese CXX)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "build")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Settings
-option(DEFINE_DEBUG_MACRO "Enables the OSU_CHEESE_DEBUG_BUILD macro. (DOES NOT SET BUILD MODE TO DEBUG!)" OFF)
+option(DEFINE_DEBUG_MACRO "Enables the OSU_CHEESE_DEBUG_BUILD macro. Used for logging, testing, and dumping of information. (DOES NOT SET BUILD MODE TO DEBUG!)" OFF)
 if (DEFINE_DEBUG_MACRO)
     add_compile_definitions(OSU_CHEESE_DEBUG_BUILD)
 endif ()

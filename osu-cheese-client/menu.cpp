@@ -18,7 +18,7 @@ auto oc::menu::render() -> void
 	
 	ImGui::SetNextWindowSize(ImVec2(660.f, 460.f), ImGuiCond_FirstUseEver);
 
-	ImGui::Begin("osu!");
+	ImGui::Begin("osu!!");
 
 	if (ImGui::Button("Unload"))
 		sed::smart_handle(CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr));
