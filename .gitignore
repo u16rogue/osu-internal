@@ -1,5 +1,6 @@
 .vs/
 .vscode/
+.idea/
 
 .out/
 out/
@@ -23,6 +24,10 @@ packages/
 /docs/
 
 /osu-cheese-loader/client_path.hpp
+
+cmake-build-debug/
+cmake-build-release/
+cmake-build-relwithdebinfo/
 
 CMakeSettings.json
 notes.txt

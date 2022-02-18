@@ -279,7 +279,7 @@ static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
 		MODULEINFO mi {};
 
 		if (!hmod || !GetModuleInformation(GetCurrentProcess(), hmod, &mi, sizeof(mi))) // TODO: handle this properly
-			return false; // TerminateProcess(GetCurrentProcess(), 1);
+            return false;
 
 		wnform_start = mi.lpBaseOfDll;
 		wnform_end = reinterpret_cast<void *>(std::uintptr_t(mi.lpBaseOfDll) + mi.SizeOfImage);
