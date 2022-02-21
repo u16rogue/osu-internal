@@ -15,44 +15,6 @@
 #include "menu.hpp"
 #include "features/features.hpp"
 
-#if 0
-static auto CALLBACK WindowProc_hook(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
-{
-	if (uMsg == WM_MOUSEMOVE)
-	{
-		DEBUG_PRINTF("\nlol");
-	}
-
-	if (oc::menu::wndproc(hwnd, uMsg, wParam, lParam) || features::dispatcher::on_wndproc(hwnd, uMsg, wParam, lParam, nullptr))
-		return TRUE;
-
-	return FALSE;
-}
-
-static void * WindowProc_original { nullptr };
-static auto __attribute__((naked)) WindowProc_proxy(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) -> LRESULT
-{
-	__asm
-	{
-		push eax
-		push [ebp+20]
-		push [ebp+16]
-		push [ebp+12]
-		push [ebp+8]
-		call WindowProc_hook
-		test al, al
-		jnz LBL_WP_SKIP_ORIGINAL
-	LBL_WP_CALL_ORIGINAL:
-		pop eax
-		push WindowProc_original // lol
-		ret
-	LBL_WP_SKIP_ORIGINAL:
-		pop eax
-		ret
-	}
-}
-#endif
-
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 enum class CallWindowProc_variant : int
@@ -264,76 +226,6 @@ static auto __attribute__((naked)) osu_set_raw_coords_proxy() -> void
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// TODO: we can just hook the function that handles this instead so we don't have to check the return address
-static decltype(GetCursorPos) * GetCursorPos_target = GetCursorPos;
-static auto __stdcall GetCursorPos_hook(LPPOINT lpPoint) -> bool
-{
-	if (!oc::menu::visible)
-		return false;
-
-	static void * wnform_start, * wnform_end;
-	if (!wnform_start || !wnform_end)
-	{
-		HMODULE hmod = GetModuleHandleW(L"System.Windows.Forms.ni.dll");
-		MODULEINFO mi {};
-
-		if (!hmod || !GetModuleInformation(GetCurrentProcess(), hmod, &mi, sizeof(mi))) // TODO: handle this properly
-            return false;
-
-		wnform_start = mi.lpBaseOfDll;
-		wnform_end = reinterpret_cast<void *>(std::uintptr_t(mi.lpBaseOfDll) + mi.SizeOfImage);
-	}
-
-	void * real_return_address { nullptr };
-
-	__asm
-	{
-		push eax
-		mov eax, [ebp]
-		mov eax, [eax + 4]
-		mov real_return_address, eax
-		pop eax
-	};
-	
-	if (real_return_address >= wnform_start && real_return_address <= wnform_end)
-	{
-		POINT p = oc::menu::freeze_view_point;
-		ClientToScreen(game::hwnd, &p);
-		*lpPoint = p;
-		return true;
-	}
-
-	return false;
-}
-
-static auto __attribute__((naked)) GetCursorPos_proxy(LPPOINT lpPoint) -> void
-{
-	__asm
-	{
-		push ebp
-		mov ebp, esp
-
-		push [ebp + 0x8]
-		call GetCursorPos_hook
-		test al, al
-		jz LBL_GETCURSORPOS_CALL_ORIGINAL
-
-		// Skip original and fake return
-	LBL_GETCURSORPOS_SKIP_ORIGINAL:
-		// "mov eax, 1                      \n" unecessary since our hook will be setting the eax (or al) register to 1 anyway
-		pop ebp
-		ret 4
-
-		// Call original
-	LBL_GETCURSORPOS_CALL_ORIGINAL:
-		mov eax, GetCursorPos_target
-		lea eax, [eax + 0x5]
-		jmp eax
-	}
-}
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 void * osu_ac_flag_original { nullptr };
 static auto __stdcall osu_ac_flag() -> void
 {
@@ -347,6 +239,28 @@ static auto __attribute__((naked)) osu_ac_flag_proxy() -> void
 		call osu_ac_flag
 		jmp osu_ac_flag_original
 	};
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// TODO: write a small ghetto hooking class so we dont get ugly chunks of code like this
+using mouse_get_position_t = void(__fastcall*)(std::uintptr_t);
+mouse_get_position_t * mouse_get_position_callptr = nullptr;
+mouse_get_position_t mouse_get_position_original = nullptr;
+auto __fastcall mouse_get_position_hook(std::uintptr_t ecx) -> void
+{
+    if (!ecx)
+        return;
+
+    if (oc::menu::visible)
+    {
+        POINT p = oc::menu::freeze_view_point;
+        ClientToScreen(game::hwnd, &p);
+        *reinterpret_cast<LPPOINT>(ecx + 0x4) = p;
+        return;
+    }
+
+    return mouse_get_position_original(ecx);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -394,10 +308,18 @@ auto hooks::install() -> bool
 	auto cond_raw_abs = cond_raw_coords + 2 + cond_raw_rel8;
 	DEBUG_PRINTF(" -> 0x%p", cond_raw_abs);
 
-	// TODO: mouse thing
 	// Mouse get position
-	//DEBUG_PRINTF("\n[+] Searching for mouse.get_Position");
-	//auto mouse_get_position_target = sed::pattern_scan_exec_region();
+	DEBUG_PRINTF("\n[+] Searching for mouse.get_Position's call to GetCursorPos...");
+	auto mouse_get_position_target = sed::pattern_scan<"FF 15 ?? ?? ?? ?? 8B 56 04 8B 46 08 89 17 89 47 04 5E 5F 5D", std::uint8_t>();
+    if (!mouse_get_position_target)
+    {
+        DEBUG_PRINTF("\n[!] Failed to locate call to GetCursorPos!");
+        return false;
+    }
+    DEBUG_PRINTF(" 0x%p", mouse_get_position_target);
+    mouse_get_position_callptr = *reinterpret_cast<decltype(mouse_get_position_callptr) *>(mouse_get_position_target + 2);
+    DEBUG_PRINTF(" -> 0x%p (callptr)", mouse_get_position_callptr);
+
 
 	// Anticheat flag - credits! https://github.com/SweetDreamzZz/osuauth-denbai-checker
 	DEBUG_PRINTF("\n[+] Searching for ac_flag_call...");
@@ -427,7 +349,6 @@ auto hooks::install() -> bool
 
 	hook_instances_t _instances;
 
-	//_OC_ADD_HOOK_INSTANCE(jmp,  wp_jmp,                       WindowProc_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcA_target,       CallWindowProcA_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  CallWindowProcW_target,       CallWindowProcW_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  SetWindowTextW,               SetWindowTextW_proxy);
@@ -435,7 +356,6 @@ auto hooks::install() -> bool
 	_OC_ADD_HOOK_INSTANCE(jmp,  osu_set_field_coords_target,  osu_set_field_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(call, cond_raw_coords,              osu_set_raw_coords_proxy);
 	_OC_ADD_HOOK_INSTANCE(jmp,  cond_raw_coords + 5,          cond_raw_abs);
-	_OC_ADD_HOOK_INSTANCE(jmp,  GetCursorPos,                 GetCursorPos_proxy);
 	_OC_ADD_HOOK_INSTANCE(call, ac_flag_call,                 osu_ac_flag_proxy);
 
 	#undef _OC_ADD_HOOK_INSTANCE
@@ -450,6 +370,10 @@ auto hooks::install() -> bool
 	}
 
 	hook_instances = std::move(_instances);
+
+    mouse_get_position_original = *mouse_get_position_callptr;
+    *mouse_get_position_callptr = mouse_get_position_hook;
+
 	return true;
 }
 
@@ -465,6 +389,8 @@ auto hooks::uninstall() -> bool
 			DEBUG_PRINTF("\n[!] Failed to uninstall hook!");
 		}
 	}
+
+    *mouse_get_position_callptr = mouse_get_position_original;
 
 	hook_instances.clear();
 	return true;
