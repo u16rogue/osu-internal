@@ -17,9 +17,11 @@
 	#include <iostream>
 	#define DEBUG_PRINTF(fmt, ...) printf(fmt, __VA_ARGS__)
 	#define DEBUG_WPRINTF(fmt, ...) wprintf(fmt, __VA_ARGS__)
+    #define DEBUG_OPT_NULL(x) x
 #else
 	#define DEBUG_PRINTF(fmt, ...)
 	#define DEBUG_WPRINTF(fmt, ...)
+    #define DEBUG_OPT_NULL(x) nullptr
 #endif
 
 #define OC_IMGUI_HOVER_TXT(fmt, ...) \

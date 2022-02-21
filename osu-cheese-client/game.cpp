@@ -58,13 +58,12 @@ auto game::initialize() -> bool
 
 	DEBUG_WPRINTF(L"0x%p", game::hwnd);
 
-	if (!pattern_scan_helper<"DB 05 ?? ?? ?? ?? D9 5D F8">                                              ("game::p_game_info",      game::p_game_info,          0x6)
-	||  !pattern_scan_helper<"8b 05 ?? ?? ?? ?? d9 40 ?? 8b 15">                                        ("game::pp_viewpos_info",  game::pp_viewpos_info.ptr,  0x6)
-	||  !pattern_scan_helper<"FF 50 0C 8B D8 8B 15">                                                    ("game::pp_info_player",   game::pp_info_player.ptr,   0xB)
-	||  !pattern_scan_helper<"8b ec 83 ec ?? a1 ?? ?? ?? ?? 85 c0 74">                                  ("game::pp_raw_mode_info", game::pp_raw_mode_info.ptr, 0xA)
-	||  !pattern_scan_helper<"8b 0d ?? ?? ?? ?? 8b 55 ?? 39 09 ff 15 ?? ?? ?? ?? 85 c0 74">             ("game::pp_pplayer_keys",  game::pp_pplayer_keys.ptr,  0x6)
-	||  !pattern_scan_helper<"8B 0D ?? ?? ?? ?? 85 C9 75 ?? B8 ?? ?? ?? ?? EB ?? 8B 01 8B 40 ?? FF 50"> ("game::pp_phitobject",    game::pp_phitobject.ptr,    0x6)
-	// ||  !pattern_scan_helper("game::pp_wnd_info",      game::pp_wnd_info.ptr,        "\x8b\x0d\x00\x00\x00\x00\x89\x45\x00\x89\x7d",         "xx????xx?xx",   0x6)
+	if (!pattern_scan_helper<"DB 05 ?? ?? ?? ?? D9 5D F8">                                              (DEBUG_OPT_NULL("game::p_game_info"),      game::p_game_info,          0x6)
+	||  !pattern_scan_helper<"8b 05 ?? ?? ?? ?? d9 40 ?? 8b 15">                                        (DEBUG_OPT_NULL("game::pp_viewpos_info"),  game::pp_viewpos_info.ptr,  0x6)
+	||  !pattern_scan_helper<"FF 50 0C 8B D8 8B 15">                                                    (DEBUG_OPT_NULL("game::pp_info_player"),   game::pp_info_player.ptr,   0xB)
+	||  !pattern_scan_helper<"8b ec 83 ec ?? a1 ?? ?? ?? ?? 85 c0 74">                                  (DEBUG_OPT_NULL("game::pp_raw_mode_info"), game::pp_raw_mode_info.ptr, 0xA)
+	||  !pattern_scan_helper<"8b 0d ?? ?? ?? ?? 8b 55 ?? 39 09 ff 15 ?? ?? ?? ?? 85 c0 74">             (DEBUG_OPT_NULL("game::pp_pplayer_keys"),  game::pp_pplayer_keys.ptr,  0x6)
+	||  !pattern_scan_helper<"8B 0D ?? ?? ?? ?? 85 C9 75 ?? B8 ?? ?? ?? ?? EB ?? 8B 01 8B 40 ?? FF 50"> (DEBUG_OPT_NULL("game::pp_phitobject"),    game::pp_phitobject.ptr,    0x6)
 	) {
 		return false;
 	}
