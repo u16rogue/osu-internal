@@ -56,7 +56,6 @@ auto oc::menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> boo
 	
 	if (!menu::visible)
 		return false;
-
 	
 	ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
 
