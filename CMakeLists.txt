@@ -11,6 +11,7 @@ if (DEFINE_DEBUG_MACRO)
 endif ()
 
 # Libraries
+add_subdirectory("dependencies/dncomlib")
 add_subdirectory("dependencies/gl3w_out")
 add_subdirectory("framework")
 add_subdirectory("dependencies/imgui")
