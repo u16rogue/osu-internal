@@ -18,7 +18,7 @@ auto oc::menu::render() -> void
 	
 	ImGui::SetNextWindowSize(ImVec2(660.f, 460.f), ImGuiCond_FirstUseEver);
 
-	ImGui::Begin("osu!!");
+	ImGui::Begin("osu! alpha");
 
 	if (ImGui::Button("Unload"))
 		sed::smart_handle(CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr));
@@ -56,6 +56,7 @@ auto oc::menu::wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) -> boo
 	
 	if (!menu::visible)
 		return false;
+
 	
 	ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
 
