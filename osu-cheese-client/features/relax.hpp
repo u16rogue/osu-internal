@@ -18,5 +18,6 @@ namespace features
 		static auto on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool;
 		static auto on_render() -> void;
 		static auto on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void;
+		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 	};
 }

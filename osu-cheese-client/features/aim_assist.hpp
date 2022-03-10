@@ -23,6 +23,7 @@ namespace features
 		// Generic settings
 		inline static method_e method = method_e::LINEAR;
 		inline static bool  enable          = false;
+		inline static bool  silent          = false;
 		inline static float fov             = 0.f;
 		inline static float dir_fov         = 20.f;
 		inline static float safezone        = 20.f;
@@ -50,5 +51,9 @@ namespace features
 		static auto on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool;
 		static auto on_render() -> void;
 		static auto on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void;
+		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
+
+	private:
+		static auto run_aim_assist() -> void;
 	};
 }

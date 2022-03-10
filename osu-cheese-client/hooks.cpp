@@ -182,6 +182,7 @@ static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_
 {
 	// Can do psilent here by setting the field coordinates
 	*out_coords = game::pp_viewpos_info->pos.view_to_field();
+	features::dispatcher::osu_set_field_coords_rebuilt(out_coords);
 }
 
 static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::vec2 * out_coords) -> void

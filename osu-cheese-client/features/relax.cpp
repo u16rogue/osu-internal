@@ -62,3 +62,7 @@ auto features::relax::on_render() -> void
 auto features::relax::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
 }
+
+auto features::relax::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+{
+}

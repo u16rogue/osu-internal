@@ -54,3 +54,7 @@ auto features::esp::on_render() -> void
 auto features::esp::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
 }
+
+auto features::esp::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+{
+}

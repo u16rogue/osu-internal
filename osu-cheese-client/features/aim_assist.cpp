@@ -18,6 +18,9 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::Checkbox("Aim assist", &enable);
 	OC_IMGUI_HOVER_TXT("Enable aim assistance - Corrects your aim to the neareast hit object when moving your cursor.");
 
+	ImGui::Checkbox("Silent", &silent);
+	OC_IMGUI_HOVER_TXT("\"Server\" side only visible aim assist.");
+
 	ImGui::SliderFloat("FOV", &fov, 0.f, 800.f);
 	OC_IMGUI_HOVER_TXT("Distance between your cursor and the hit object required before aim assistance activates. (0 = Global)");
 
@@ -191,4 +194,12 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	}
 
 	return;
+}
+
+auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+{
+}
+
+auto features::aim_assist::run_aim_assist() -> void
+{
 }

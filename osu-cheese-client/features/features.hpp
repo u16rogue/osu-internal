@@ -26,6 +26,11 @@ namespace features
 		{
 			(fts::on_osu_set_raw_coords(raw_coords), ...);
 		}
+
+		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+		{
+			(fts::osu_set_field_coords_rebuilt(out_coords), ...);
+		}
 	};
 
 	using dispatcher = _features_dispatch_pack<
