@@ -12,6 +12,8 @@ namespace features
 		inline static bool tracer    = false;
 		inline static bool distance  = false;
 
+		inline static bool dbg_ishit = false;
+
 	public:
 		esp() = delete;
 		static auto on_tab_render() -> void;

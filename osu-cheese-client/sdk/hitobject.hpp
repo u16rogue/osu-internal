@@ -41,22 +41,26 @@ namespace sdk
 	public:
 		struct
 		{
-			std::int32_t start;
-			std::int32_t end;
+			std::int32_t start; // 00
+			std::int32_t end; // 04
 		} time;
 
-		hit_type type;
-		sound_type sound_type;
-		std::int32_t segment_count;
-		std::int32_t segment_length;
-		/*double*/ char spatial_length[4]; // internally a double but it's only 4 bytes when reversed so it's padded instead since double is 8 bytes
-		std::int32_t combo_color_offset;
-		std::int32_t combo_color_index;
-		std::uint32_t raw_color;
-		sdk::vec2 position;
+		hit_type        type; // 08
+		sound_type      sound_type; // 12
+		std::int32_t    segment_count; // 16
+		std::int32_t    segment_length; // 20
+		/*double*/ char spatial_length[4]; // 24 // internally a double but it's only 4 bytes so it's padded instead since double is 8 bytes
+		std::int32_t    combo_color_offset; // 28
+		std::int32_t    combo_color_index; // 32
+		std::uint32_t   raw_color; // 36
+		sdk::vec2       position; // 40
 		// not sure with the rest below
-		std::int32_t stack_count;
-		std::int32_t last_in_combo;
+		std::int32_t    stack_count; // 48
+		std::int32_t    last_in_combo; // 52
+	private:
+		char pad1[0x3C];
+	public:
+		std::int32_t is_hit;
 	};
 
 	struct ho_array
@@ -82,8 +86,8 @@ namespace sdk
 
 	public:
 		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
-		auto begin() -> hitobject *;
-		auto end() -> hitobject *;
+		auto begin() -> hitobject **;
+		auto end() -> hitobject **;
 	};
 
 	struct ho_1
@@ -115,8 +119,8 @@ namespace sdk
 	class pp_phitobject_t : public sed::basic_ptrptr<hitobject_pointer>
 	{
 	public:
-		auto begin() -> hitobject *;
-		auto end() -> hitobject *;
+		auto begin() -> hitobject **;
+		auto end() -> hitobject **;
 
 		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
 		auto count() -> std::uint32_t;

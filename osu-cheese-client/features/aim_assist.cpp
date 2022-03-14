@@ -64,6 +64,7 @@ auto features::aim_assist::on_tab_render() -> void
 
 	ImGui::Checkbox("Visualize Aim FOV", &vis_fov);
 	ImGui::Checkbox("Visualize Safezone FOV", &vis_safezonefov);
+	ImGui::Checkbox("Show cursor", &vis_show_cursor);
 
 	ImGui::EndTabItem();
 }
@@ -79,6 +80,9 @@ auto features::aim_assist::on_render() -> void
 		return;
 
 	auto draw = ImGui::GetBackgroundDrawList();
+
+	if (vis_show_cursor)
+		draw->AddCircleFilled(cursor_point, 4.f, 0xFF00FFFF);
 
 	if (vis_fov)
 		draw->AddCircle(game::pp_viewpos_info->pos, fov, 0xFFFFFFFF);
@@ -101,6 +105,22 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 		last_tick_point = *raw_coords;
 	}
 
+	if (!silent)
+		run_aim_assist(raw_coords);
+
+	return;
+}
+
+auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+{
+	if (silent)
+		run_aim_assist(out_coords);
+
+	return;
+}
+
+auto features::aim_assist::run_aim_assist(sdk::vec2 * pcoords) -> void
+{
 	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
@@ -136,70 +156,5 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	if (safezone != 0.f && dist_to_ho <= safezone)
 		return;
 
-	sdk::vec2 new_coords, target /* temporary for optimization, might be irrelevant in the future */;
-
-	switch (method)
-	{
-		case method_e::LINEAR:
-		{
-			target = ho->position;
-			break;
-		}
-
-		case method_e::DIRECTIONAL_CURVE:
-		{
-			auto p2ho_p = player_field_pos.forward_towards(ho->position, dist_to_ho * mdc_ho_ratio);
-			auto p2dir_p = player_field_pos.forward(player_direction, dist_to_ho * mdc_pdir_ratio);
-
-			sdk::vec2 start, end;
-
-			switch (mdc_method)
-			{
-				case mdc_mpoint_method_e::HO_TO_PDIR:
-				{
-					start = p2ho_p;
-					end = p2dir_p;
-					break;
-				}
-
-				case mdc_mpoint_method_e::DYNAMIC: // TODO: implement this
-				case mdc_mpoint_method_e::PDIR_TO_HO:
-				{
-					start = p2dir_p;
-					end = p2ho_p;
-					break;
-				}
-
-				default:
-					break;
-			}
-
-			target = start.forward_towards(end, start.distance(end) * mdc_midpoint_ratio);
-			break;
-		}
-
-		default:
-			return;
-	}
-
-	new_coords      = player_field_pos.forward_towards(target, std::clamp(velocity * scaleassist, 0.f, dist_to_ho)).field_to_view();
-	last_tick_point = new_coords; // update last tick point to our new coordinates since the new coords will now be our current point for the tick this also prevents over calculating the velocity
-	*raw_coords     = new_coords; // update the ingame coordinates
-
-	if (!game::pp_raw_mode_info->is_raw)
-	{
-		POINT pscr = new_coords;
-		ClientToScreen(game::hwnd, &pscr);
-		SetCursorPos(pscr.x, pscr.y);
-	}
-
-	return;
-}
-
-auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
-{
-}
-
-auto features::aim_assist::run_aim_assist() -> void
-{
+	
 }

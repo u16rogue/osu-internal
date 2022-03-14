@@ -18,6 +18,9 @@ auto features::esp::on_tab_render() -> void
 	ImGui::Checkbox("Hit object tracer", &tracer);
 	OC_IMGUI_HOVER_TXT("Draws a line from the players cursor to the next hit object.");
 
+	ImGui::Separator();
+	ImGui::Checkbox("[DEBUG] Is hit", &dbg_ishit);
+	
 	ImGui::EndTabItem();
 }
 
@@ -31,12 +34,22 @@ auto features::esp::on_render() -> void
 	if (!game::pp_info_player->async_complete || !game::pp_phitobject || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
+	auto draw = ImGui::GetBackgroundDrawList();
+
+	if (dbg_ishit && game::pp_phitobject)
+	{
+		int x {};
+		for (const auto & ho : game::pp_phitobject)//int i = 0; i < game::pp_phitobject.count(); ++i)
+		{
+			draw->AddCircleFilled(ho->position.field_to_view(), 8.f, ho->is_hit ? 0xFF00FFFF : 0x00FFFFFF);
+		}
+	}
+
 	auto [ho, i] = game::pp_phitobject.get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
 		return;
 
-	auto draw = ImGui::GetBackgroundDrawList();
-	std::string esptxt; 
+	std::string esptxt;
 
 	if (timer)
 		esptxt.append("TIME: " + std::to_string(ho->time.start - game::p_game_info->beat_time) + "\n");

@@ -33,6 +33,7 @@ namespace features
 		// Visuals settings
 		inline static bool vis_fov         = false;
 		inline static bool vis_safezonefov = false;
+		inline static bool vis_show_cursor = false;
 
 		// Directional curve settings
 		inline static float               mdc_ho_ratio       = 0.5f;
@@ -41,6 +42,7 @@ namespace features
 		inline static mdc_mpoint_method_e mdc_method         = mdc_mpoint_method_e::PDIR_TO_HO;
 
 		// Internal calculations and tracking
+		inline static sdk::vec2 cursor_point     {};
 		inline static sdk::vec2 last_tick_point  {};
 		inline static sdk::vec2 player_direction {};
 		inline static float     velocity { 0.f };
@@ -54,6 +56,6 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
-		static auto run_aim_assist() -> void;
+		static auto run_aim_assist(sdk::vec2 * pcoords) -> void;
 	};
 }

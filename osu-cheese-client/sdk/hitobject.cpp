@@ -11,22 +11,22 @@ auto sdk::ho_vector::get_coming_hitobject(std::uint32_t time) -> std::pair<hitob
 	return std::make_pair(nullptr, -1);
 }
 
-auto sdk::ho_vector::begin() -> hitobject *
+auto sdk::ho_vector::begin() -> hitobject **
 {
-	return this->container->hitobjects[0];
+	return &this->container->hitobjects[0];
 }
 
-auto sdk::ho_vector::end() -> hitobject *
+auto sdk::ho_vector::end() -> hitobject **
 {
-	return this->container->hitobjects[this->count];
+	return &this->container->hitobjects[this->count];
 }
 
-auto sdk::pp_phitobject_t::begin() -> hitobject *
+auto sdk::pp_phitobject_t::begin() -> hitobject **
 {
 	return (*this->ptr)->ho2->ho1->ho_vec->begin();
 }
 
-auto sdk::pp_phitobject_t::end() -> hitobject *
+auto sdk::pp_phitobject_t::end() -> hitobject **
 {
 	return (*this->ptr)->ho2->ho1->ho_vec->end();
 }
