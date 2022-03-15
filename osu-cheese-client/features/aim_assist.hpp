@@ -3,19 +3,31 @@
 #include <Windows.h>
 #include "../sdk/osu_vec.hpp"
 
+#include <optional>
+#include <deque>
+
 namespace features
 {
 	class aim_assist
 	{
 
+		struct point_record
+		{
+			sdk::vec2 point {};
+			DWORD tick {};
+		};
+
 		// Generic settings
-		inline static bool  enable          = false;
+		inline static bool enable = true;
+		inline static int max_tick_sample = 200;
 
 		// Visuals settings
 
 		// Directional curve settings
 
 		// Internal calculations and tracking
+		inline static float velocity {};
+		inline static std::optional<std::deque<point_record>> point_records;
 
 	public:
 		aim_assist() = delete;
