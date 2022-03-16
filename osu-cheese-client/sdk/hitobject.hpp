@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "osu_vec.hpp"
 #include <sed/memory.hpp>
+#include <sed/macro.hpp>
 
 namespace sdk
 {
@@ -63,6 +64,7 @@ namespace sdk
 		std::int32_t is_hit;
 	};
 
+	// ?? internal array (_items)
 	struct ho_array
 	{
 	private:
@@ -73,16 +75,18 @@ namespace sdk
 		hitobject * hitobjects[];
 	};
 
+
+	// this is List<HitObject>
 	struct ho_vector
 	{
 	private:
-		char pad[0x4];
+		char pad[0x4]; // _defaultCapacity or maybe the vtable idk since this one is const
 	public:
-		ho_array * container;
+		ho_array * container; // _items
 	private:
 		char pad1[0x4];
 	public:
-		std::uint32_t count;
+		std::uint32_t count; // _size
 
 	public:
 		auto get_coming_hitobject(std::uint32_t time) -> std::pair<hitobject *, int>;
@@ -90,6 +94,7 @@ namespace sdk
 		auto end() -> hitobject **;
 	};
 
+	// actually hitobjectmanager
 	struct ho_1
 	{
 	private:
@@ -100,6 +105,8 @@ namespace sdk
 		ho_vector * ho_vec;
 	};
 
+	// ~hitobject manager... or this could actually be a Ruleset~
+	// yes this is actually a rule set
 	struct ho_2
 	{
 	private:
@@ -108,12 +115,12 @@ namespace sdk
 		ho_1 * ho1;
 	};
 
-	struct hitobject_pointer
+	// this is actually the Player class lol
+	union hitobject_pointer
 	{
-	private:
-		char pad[0x60];
-	public:
-		ho_2 * ho2;
+		// actual hitobject manager is at 0x40
+		OC_UNS_PAD(0x40, ho_1 *, hitobjectmanager);
+		OC_UNS_PAD(0x60, ho_2 *, ho2);// this is a rule set!!
 	};
 
 	class pp_phitobject_t : public sed::basic_ptrptr<hitobject_pointer>

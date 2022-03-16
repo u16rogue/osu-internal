@@ -38,6 +38,8 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
-		static auto run_aim_assist(sdk::vec2 * pcoords) -> void;
+		static auto run_aim_assist() -> void;
+		static auto collect_velocity_sampling (const sdk::vec2 & cpoint) -> void;
+		static auto run_velocity_sampling() -> void;
 	};
 }

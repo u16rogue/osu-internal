@@ -177,7 +177,7 @@ static auto __attribute__((naked)) SetWindowTextW_proxy(HWND hWnd, LPCWSTR lpStr
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl
+// Name: #=zP4nKUSUPOssQxNF6$g==::#=z9UGmDcmwjvbl || DisplayToField
 static auto __fastcall osu_set_field_coords_rebuilt(void * ecx, sdk::vec2 * out_coords) -> void
 {
 	// Can do psilent here by setting the field coordinates
@@ -200,6 +200,7 @@ static auto __attribute__((naked)) osu_set_field_coords_proxy(void * ecx, sdk::v
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// MouseHandler
 static auto __fastcall osu_set_raw_coords_rebuilt(sdk::vec2 * raw_coords) -> void
 {
 	if (oc::menu::visible && game::pp_raw_mode_info->is_raw)

@@ -22,12 +22,28 @@ auto oc::menu::render() -> void
 
 	if (ImGui::Button("Unload"))
 		sed::smart_handle(CreateThread(nullptr, NULL, [](LPVOID arg) -> DWORD { oc::unload(); return 0; }, nullptr, NULL, nullptr));
-
+	
 	ImGui::SameLine();
 	ImGui::Text("[PAUSE] Key to toggle menu.");
 
 	if (ImGui::BeginTabBar("##oc_tabs"))
 	{
+		if (ImGui::BeginTabItem("debug stuff"))
+		{
+			if (ImGui::Button("[DEBUG] test hitobjectmanager thing"))
+			{
+				if (!game::pp_phitobject)
+				{
+					DEBUG_PRINTF("\n[D] not yet");
+				}
+				else
+				{
+					DEBUG_PRINTF("\n[D] hitobject count: %d", game::pp_phitobject->hitobjectmanager->ho_vec->count);
+				}
+			}
+		}
+		ImGui::EndTabItem();
+
 		features::dispatcher::on_tab_render();
 		ImGui::EndTabBar();	
 	}

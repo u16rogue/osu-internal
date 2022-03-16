@@ -40,6 +40,83 @@ auto features::aim_assist::on_render() -> void
 		draw->AddText(pos, 0xFFFFFFFF, str);
 	};
 
+	// HACK: DEBUG ! REMOVE !
+	if (point_records)
+	{
+		point_record * last = nullptr;
+		for (auto & prt : *point_records)
+		{
+			if (prt.tick < GetTickCount() - max_tick_sample)
+				continue;
+
+			if (!last)
+			{
+				last = &prt;
+				continue;
+			}
+
+			draw->AddLine(last->point, prt.point, 0xFF0000FF);
+			last = &prt;
+		}
+	}
+
+	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
+
+	run_velocity_sampling();
+
+	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
+		return;
+
+}
+
+auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
+{
+	collect_velocity_sampling(*raw_coords);
+
+	return;
+}
+
+auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
+{
+	return;
+}
+
+auto features::aim_assist::run_aim_assist() -> void
+{
+	if (!enable)
+		return;
+
+	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+		return;
+
+	
+
+}
+
+auto features::aim_assist::collect_velocity_sampling(const sdk::vec2 & cpoint) -> void
+{
+	// retarded initialization bug fix
+	if (!point_records)
+	{
+		std::deque<point_record> asdf {};
+		point_records = std::move(asdf);
+	}
+
+	const auto current_tick = GetTickCount();
+	point_records->push_back({ cpoint, current_tick });
+
+	// cleanup old ticks
+	for (;;)
+	{
+		if (point_records->empty() || point_records->front().tick > current_tick - max_tick_sample)
+			break;
+
+		point_records->pop_front();
+	}
+}
+
+auto features::aim_assist::run_velocity_sampling() -> void
+{
 	if (point_records)
 	{
 		int count {};
@@ -56,53 +133,11 @@ auto features::aim_assist::on_render() -> void
 				continue;
 			}
 
-			draw->AddLine(last->point, prt.point, 0xFF0000FF);
-
-			total += last->point.distance(prt.point);
+			total += last->point.view_to_field().distance(prt.point.view_to_field());
 			last = &prt;
 			++count;
 		}
 
 		velocity = total ? total / count : 0.f;
 	}
-
-	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
-
-	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
-		return;
-
-}
-
-auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
-{
-	// retarded initialization bug fix
-	if (!point_records)
-	{
-		std::deque<point_record> asdf {};
-		point_records = std::move(asdf);
-	}
-	auto current_tick = GetTickCount();
-	point_records->push_back({ *raw_coords, current_tick });
-
-	// cleanup old ticks
-	for (;;)
-	{
-		if (point_records->empty() || point_records->front().tick > current_tick - max_tick_sample)
-			break;
-
-		point_records->pop_front();
-	}
-
-	return;
-}
-
-auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
-{
-	return;
-}
-
-auto features::aim_assist::run_aim_assist(sdk::vec2 * pcoords) -> void
-{
-	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
-		return;
 }
