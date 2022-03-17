@@ -74,3 +74,8 @@ sdk::pp_phitobject_t::operator bool() const noexcept
 
 	return true;
 }
+
+auto sdk::beatmapbase::circle_size() -> float
+{
+	return 54.4f - 4.48f * DifficultyCircleSize;
+}

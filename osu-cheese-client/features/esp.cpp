@@ -36,12 +36,15 @@ auto features::esp::on_render() -> void
 
 	auto draw = ImGui::GetBackgroundDrawList();
 
-	if (dbg_ishit && game::pp_phitobject)
+	if (game::pp_phitobject)
 	{
 		int x {};
 		for (const auto & ho : game::pp_phitobject)//int i = 0; i < game::pp_phitobject.count(); ++i)
 		{
-			draw->AddCircleFilled(ho->position.field_to_view(), 8.f, ho->is_hit ? 0xFF00FFFF : 0x00FFFFFF);
+			if (dbg_ishit)
+				draw->AddCircleFilled(ho->position.field_to_view(), 8.f, ho->is_hit ? 0xFF00FFFF : 0xFFFF00FF);
+
+			// draw->AddCircle(ho->position.field_to_view(), game::pp_phitobject->hitobjectmanager->beatmap->circle_size(), 0xFF00FFFF);
 		}
 	}
 

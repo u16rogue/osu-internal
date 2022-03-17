@@ -104,6 +104,9 @@ namespace sdk
 		float DifficultyOverall; //0x0038
 		double DifficultySliderMultiplier; //0x003C
 		double DifficultySliderTickRate; //0x0044
+
+		auto circle_size() -> float;
+
 	}; //Size: 0x004C
 
 	// actually hitobjectmanager
