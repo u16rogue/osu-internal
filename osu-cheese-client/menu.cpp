@@ -45,8 +45,9 @@ auto oc::menu::render() -> void
 					);
 				}
 			}
+
+			ImGui::EndTabItem();
 		}
-		ImGui::EndTabItem();
 
 		features::dispatcher::on_tab_render();
 		ImGui::EndTabBar();	

@@ -18,14 +18,18 @@ namespace features
 		};
 
 		// Generic settings
-		inline static bool enable = true;
+		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
+		inline static bool silent = true;
 
 		// Visuals settings
 
 		// Directional curve settings
 
 		// Internal calculations and tracking
+		inline static bool use_set = false;
+		inline static sdk::vec2 set_point {};
+
 		inline static float velocity {};
 		inline static std::optional<std::deque<point_record>> point_records;
 

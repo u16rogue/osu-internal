@@ -17,6 +17,7 @@ auto features::aim_assist::on_tab_render() -> void
 		return;
 
 	ImGui::Checkbox("Enabled", &enable);
+	ImGui::Checkbox("Silent", &silent);
 	ImGui::InputInt("[DEBUG] Max tick sample", &max_tick_sample);
 
 	ImGui::EndTabItem();
@@ -55,41 +56,61 @@ auto features::aim_assist::on_render() -> void
 				continue;
 			}
 
-			draw->AddLine(last->point, prt.point, 0xFF0000FF);
+			draw->AddLine(last->point, prt.point, 0xFF00FF00);
 			last = &prt;
 		}
 	}
 
 	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
 
+	auto opx_dist = game::pp_viewpos_info->pos.view_to_field().distance(set_point);
+	stext(ImVec2(20.f, 112.f), ("p cl2sv dd: " + std::to_string(opx_dist) + " opx").c_str());
+
+	const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
+	stext(ImVec2(20.f, 124.f), ("p cl2sv d%: " + std::to_string(opx_dist / max_p2p_distance * 100.f) + "%").c_str());
+
 	run_velocity_sampling();
+	run_aim_assist();
 
-	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
-		return;
-
+	// Draw player position
+	if (enable)
+		draw->AddCircleFilled(set_point.field_to_view(), 8.f, 0xFF00FF00);
 }
 
 auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
 	collect_velocity_sampling(*raw_coords);
 
+	if (enable && !silent && use_set)
+		*raw_coords = set_point;
+
 	return;
 }
 
 auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void
 {
+	if (enable && silent && use_set)
+		*out_coords = set_point;
+
 	return;
 }
 
 auto features::aim_assist::run_aim_assist() -> void
 {
+	static bool last_enable_state = false;
+
+	if (enable != last_enable_state)
+	{
+		last_enable_state = enable;
+	}
+
 	if (!enable)
 		return;
 
 	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	
+	// check fov
 
 }
 
