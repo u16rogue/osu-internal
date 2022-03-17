@@ -38,7 +38,11 @@ auto oc::menu::render() -> void
 				}
 				else
 				{
-					DEBUG_PRINTF("\n[D] hitobject count: %d", game::pp_phitobject->hitobjectmanager->ho_vec->count);
+					DEBUG_PRINTF("\n[D] hitobject count: %d"
+								 "\n[D] circle size: %2f",
+								 game::pp_phitobject->hitobjectmanager->ho_vec->count,
+								 game::pp_phitobject->hitobjectmanager->beatmap->DifficultyCircleSize
+					);
 				}
 			}
 		}

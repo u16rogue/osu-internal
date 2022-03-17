@@ -94,15 +94,26 @@ namespace sdk
 		auto end() -> hitobject **;
 	};
 
-	// actually hitobjectmanager
-	struct ho_1
+	class beatmapbase
 	{
-	private:
+	public:
+		int8_t pad[44]; //0x0000
+		float DifficultyApproachRate; //0x002C
+		float DifficultyCircleSize; //0x0030
+		float DifficultyHpDrainRate; //0x0034
+		float DifficultyOverall; //0x0038
+		double DifficultySliderMultiplier; //0x003C
+		double DifficultySliderTickRate; //0x0044
+	}; //Size: 0x004C
+
+	// actually hitobjectmanager
+	union ho_1
+	{
+		OC_UNS_PAD(0x30, beatmapbase *, beatmap);
+
 		// 0x44 is in register EAX but seems to be constant
 		// mov ecx,[eax+ecx+0x04]
-		char pad[0x04 + 0x44];
-	public:
-		ho_vector * ho_vec;
+		OC_UNS_PAD(0x04 + 0x44, ho_vector *, ho_vec); // internal List<HitObject> hitObjects = new List<HitObject>();
 	};
 
 	// ~hitobject manager... or this could actually be a Ruleset~
