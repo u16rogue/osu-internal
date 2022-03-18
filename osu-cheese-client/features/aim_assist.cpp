@@ -8,6 +8,7 @@
 
 #include "../manager/gamefield_manager.hpp"
 
+#include <format>
 #include <algorithm>
 #include <string>
 
@@ -18,7 +19,9 @@ auto features::aim_assist::on_tab_render() -> void
 
 	ImGui::Checkbox("Enabled", &enable);
 	ImGui::Checkbox("Silent", &silent);
-	ImGui::InputInt("[DEBUG] Max tick sample", &max_tick_sample);
+	ImGui::InputInt("[DEBUG] max_tick_sample", &max_tick_sample);
+	ImGui::InputInt("[DEBUG] max_reach_time_offset (late and over)", &max_reach_time_offset);
+	ImGui::SliderFloat("opx Distance", &distance_fov, 0.f, 300.f);
 
 	ImGui::EndTabItem();
 }
@@ -41,6 +44,10 @@ auto features::aim_assist::on_render() -> void
 		draw->AddText(pos, 0xFFFFFFFF, str);
 	};
 
+	run_sampling();
+	move_aim_assist();
+	check_aim_assist();
+
 	// HACK: DEBUG ! REMOVE !
 	if (point_records)
 	{
@@ -61,25 +68,39 @@ auto features::aim_assist::on_render() -> void
 		}
 	}
 
+	// fov test
+	#if 0
+	if (game::pp_phitobject)
+	{
+		for (const auto & phit : game::pp_phitobject)
+		{
+			draw->AddCircleFilled(phit->position.field_to_view(), 4.f, (game::pp_viewpos_info->pos.view_to_field().distance(phit->position)) > distance_fov ? 0xFF00FFFF : 0xFF00FF00);
+		}
+	}
+	#endif
+
+	const sdk::vec2 & curpnt = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
+
 	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
 
-	auto opx_dist = game::pp_viewpos_info->pos.view_to_field().distance(set_point);
+	auto opx_dist = game::pp_viewpos_info->pos.view_to_field().distance(curpnt);
 	stext(ImVec2(20.f, 112.f), ("p cl2sv dd: " + std::to_string(opx_dist) + " opx").c_str());
 
 	const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
 	stext(ImVec2(20.f, 124.f), ("p cl2sv d%: " + std::to_string(opx_dist / max_p2p_distance * 100.f) + "%").c_str());
 
-	run_velocity_sampling();
-	run_aim_assist();
-
 	// Draw player position
 	if (enable)
-		draw->AddCircleFilled(set_point.field_to_view(), 8.f, 0xFF00FF00);
+	{
+		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
+		draw->AddCircleFilled(target_point.field_to_view(), 4.f, 0xFF00FFFF);
+		draw->AddCircle(game::pp_viewpos_info->pos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
+	}
 }
 
 auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 {
-	collect_velocity_sampling(*raw_coords);
+	collect_sampling(*raw_coords);
 
 	if (enable && !silent && use_set)
 		*raw_coords = set_point;
@@ -95,7 +116,7 @@ auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) 
 	return;
 }
 
-auto features::aim_assist::run_aim_assist() -> void
+auto features::aim_assist::check_aim_assist() -> void
 {
 	static bool last_enable_state = false;
 
@@ -110,11 +131,43 @@ auto features::aim_assist::run_aim_assist() -> void
 	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
+	sdk::hitobject * target {};
+
+	// find target
+	for (const auto & ho : game::pp_phitobject)
+	{
+		if (ho->is_hit)
+			continue;
+
+		target = ho;
+		break;
+	}
+
+	if (!target)
+		return;
+
+	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
+
 	// check fov
+	if (player_field_pos.distance(target->position) > distance_fov)
+	{
+		// ~disable when we go out of fov~
+		// just keep it despite going out of fov
+		// if ()
+
+		return;
+	}
+
+	// predict if player will reach hitobject in the given time based off the current average velocity
 
 }
 
-auto features::aim_assist::collect_velocity_sampling(const sdk::vec2 & cpoint) -> void
+auto features::aim_assist::move_aim_assist() -> void
+{
+
+}
+
+auto features::aim_assist::collect_sampling(const sdk::vec2 & cpoint) -> void
 {
 	// retarded initialization bug fix
 	if (!point_records)
@@ -136,13 +189,16 @@ auto features::aim_assist::collect_velocity_sampling(const sdk::vec2 & cpoint) -
 	}
 }
 
-auto features::aim_assist::run_velocity_sampling() -> void
+auto features::aim_assist::run_sampling() -> void
 {
 	if (point_records)
 	{
 		int count {};
-		float total {};
+		float total_vel {};
 		point_record * last = nullptr;
+
+		sdk::vec2 last_direction {};
+
 		for (auto & prt : *point_records)
 		{
 			if (prt.tick < GetTickCount() - max_tick_sample)
@@ -154,11 +210,12 @@ auto features::aim_assist::run_velocity_sampling() -> void
 				continue;
 			}
 
-			total += last->point.view_to_field().distance(prt.point.view_to_field());
-			last = &prt;
+			// velocity
+			total_vel += last->point.view_to_field().distance(prt.point.view_to_field());
 			++count;
+			last = &prt;
 		}
 
-		velocity = total ? total / count : 0.f;
+		velocity = total_vel ? total_vel / count : 0.f;
 	}
 }

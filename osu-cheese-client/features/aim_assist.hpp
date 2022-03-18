@@ -21,6 +21,8 @@ namespace features
 		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
 		inline static bool silent = true;
+		inline static int max_reach_time_offset = 250;
+		inline static float distance_fov = 30.f; 
 
 		// Visuals settings
 
@@ -29,6 +31,7 @@ namespace features
 		// Internal calculations and tracking
 		inline static bool use_set = false;
 		inline static sdk::vec2 set_point {};
+		inline static sdk::vec2 target_point {};
 
 		inline static float velocity {};
 		inline static std::optional<std::deque<point_record>> point_records;
@@ -42,8 +45,9 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
-		static auto run_aim_assist() -> void;
-		static auto collect_velocity_sampling (const sdk::vec2 & cpoint) -> void;
-		static auto run_velocity_sampling() -> void;
+		static auto check_aim_assist() -> void;
+		static auto move_aim_assist() -> void;
+		static auto collect_sampling (const sdk::vec2 & cpoint) -> void;
+		static auto run_sampling() -> void;
 	};
 }
