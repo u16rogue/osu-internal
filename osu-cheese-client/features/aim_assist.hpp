@@ -20,9 +20,11 @@ namespace features
 		// Generic settings
 		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
+		inline static int count_direction_sampling = 2;
 		inline static bool silent = true;
 		inline static int max_reach_time_offset = 250;
 		inline static float distance_fov = 30.f; 
+		inline static float directional_fov = 90.f;
 
 		// Visuals settings
 
@@ -34,6 +36,7 @@ namespace features
 		inline static sdk::vec2 target_point {};
 
 		inline static float velocity {};
+		inline static sdk::vec2 direction {};
 		inline static std::optional<std::deque<point_record>> point_records;
 
 	public:

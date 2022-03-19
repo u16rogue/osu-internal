@@ -22,6 +22,8 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::InputInt("[DEBUG] max_tick_sample", &max_tick_sample);
 	ImGui::InputInt("[DEBUG] max_reach_time_offset (late and over)", &max_reach_time_offset);
 	ImGui::SliderFloat("opx Distance", &distance_fov, 0.f, 300.f);
+	ImGui::SliderFloat("directional_fov", &directional_fov, 0.f, 180.f);
+	ImGui::InputInt("[DEBUG] count_direction_sampling", &count_direction_sampling);
 
 	ImGui::EndTabItem();
 }
@@ -95,6 +97,9 @@ auto features::aim_assist::on_render() -> void
 		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
 		draw->AddCircleFilled(target_point.field_to_view(), 4.f, 0xFF00FFFF);
 		draw->AddCircle(game::pp_viewpos_info->pos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
+
+		const auto dir_vis_len = 36.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
+		draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(direction, dir_vis_len), 0xFFFFFFFF, 3.f); // visualize player direction
 	}
 }
 
@@ -158,6 +163,8 @@ auto features::aim_assist::check_aim_assist() -> void
 		return;
 	}
 
+	// check if player direction
+
 	// predict if player will reach hitobject in the given time based off the current average velocity
 
 }
@@ -193,12 +200,15 @@ auto features::aim_assist::run_sampling() -> void
 {
 	if (point_records)
 	{
-		int count {};
+		int count_vel {};
+		//int count_dir {};
 		float total_vel {};
+		float total_dir {};
 		point_record * last = nullptr;
 
-		sdk::vec2 last_direction {};
+		//sdk::vec2 last_direction {};
 
+		// i think this should iterate in reverse
 		for (auto & prt : *point_records)
 		{
 			if (prt.tick < GetTickCount() - max_tick_sample)
@@ -210,12 +220,40 @@ auto features::aim_assist::run_sampling() -> void
 				continue;
 			}
 
+			auto last_in_field = last->point.view_to_field();
+			auto now_in_field = prt.point.view_to_field();
+
 			// velocity
-			total_vel += last->point.view_to_field().distance(prt.point.view_to_field());
-			++count;
+			total_vel += last_in_field.distance(now_in_field);
+
+			#if 0
+			// direction
+			if (count_dir < count_direction_sampling)
+			{
+				if (last_direction == sdk::vec2())
+				{
+					last_direction = last_in_field.normalize_towards(now_in_field);
+				}
+				else
+				{
+					auto curr_direction = last_in_field.normalize_towards(now_in_field);
+					total_dir += last_direction.vec2vec_angle(curr_direction) / 2;
+					++count_dir;
+				}
+			}
+			#endif
+
+			++count_vel;
 			last = &prt;
 		}
 
-		velocity = total_vel ? total_vel / count : 0.f;
+		// direction = sdk::vec2::from_deg(total_dir / count_direction_sampling);
+
+		if (const auto pr_cnt = point_records->size(); pr_cnt > count_direction_sampling)
+		{
+			direction = (*point_records)[pr_cnt - count_direction_sampling].point.normalize_towards(point_records->back().point);
+		}
+
+		velocity  = total_vel ? total_vel / count_vel : 0.f;
 	}
 }
