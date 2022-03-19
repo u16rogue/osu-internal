@@ -20,17 +20,18 @@ namespace features
 		// Generic settings
 		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
-		inline static int count_direction_sampling = 2;
+		inline static int count_direction_sampling = 4;
 		inline static bool silent = true;
 		inline static int max_reach_time_offset = 250;
 		inline static float distance_fov = 30.f; 
-		inline static float directional_fov = 90.f;
+		inline static float directional_fov = 50.f;
 
 		// Visuals settings
 
 		// Directional curve settings
 
 		// Internal calculations and tracking
+		inline static bool locking = false;
 		inline static bool use_set = false;
 		inline static sdk::vec2 set_point {};
 		inline static sdk::vec2 target_point {};

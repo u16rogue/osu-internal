@@ -40,10 +40,10 @@ auto features::aim_assist::on_render() -> void
 
 	auto draw = ImGui::GetBackgroundDrawList();
 
-	const auto stext = [&](const ImVec2 & pos, const char * str) -> void
+	const auto stext = [&](const ImVec2 & pos, const char * str, ImU32 color = 0xFFFFFFFF) -> void
 	{
 		draw->AddText(ImVec2(pos.x + 1.f, pos.y + 1.f), 0xFF000000, str);
-		draw->AddText(pos, 0xFFFFFFFF, str);
+		draw->AddText(pos, color, str);
 	};
 
 	run_sampling();
@@ -65,7 +65,7 @@ auto features::aim_assist::on_render() -> void
 				continue;
 			}
 
-			draw->AddLine(last->point, prt.point, 0xFF00FF00);
+			draw->AddLine(last->point, prt.point, 0xFF00FF00, 3.f);
 			last = &prt;
 		}
 	}
@@ -82,10 +82,13 @@ auto features::aim_assist::on_render() -> void
 	#endif
 
 	const sdk::vec2 & curpnt = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
+	const auto & curpos = game::pp_viewpos_info->pos;
+
+	stext(ImVec2(20.f, 88.f), "AIM ASSIST LOCK", locking ? 0xFF00FF00 : 0xFF0000FF);
 
 	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
 
-	auto opx_dist = game::pp_viewpos_info->pos.view_to_field().distance(curpnt);
+	auto opx_dist = curpos.view_to_field().distance(curpnt);
 	stext(ImVec2(20.f, 112.f), ("p cl2sv dd: " + std::to_string(opx_dist) + " opx").c_str());
 
 	const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
@@ -96,10 +99,19 @@ auto features::aim_assist::on_render() -> void
 	{
 		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
 		draw->AddCircleFilled(target_point.field_to_view(), 4.f, 0xFF00FFFF);
-		draw->AddCircle(game::pp_viewpos_info->pos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
+		draw->AddCircle(curpos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
 
-		const auto dir_vis_len = 36.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
+		const auto dir_vis_len = 60.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
 		draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(direction, dir_vis_len), 0xFFFFFFFF, 3.f); // visualize player direction
+
+		// visualize directional fov
+		const auto dir_ang = direction.from_norm_to_deg();
+		
+		const auto a1 = curpos.forward(sdk::vec2::from_deg(dir_ang - directional_fov), dir_vis_len);
+		draw->AddLine(curpos, a1, 0xFFFFFFFF, 3.f);
+
+		const auto a2 = curpos.forward(sdk::vec2::from_deg(dir_ang + directional_fov), dir_vis_len);
+		draw->AddLine(curpos, a2, 0xFFFFFFFF, 3.f);
 	}
 }
 
@@ -153,20 +165,31 @@ auto features::aim_assist::check_aim_assist() -> void
 
 	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
 
-	// check fov
-	if (player_field_pos.distance(target->position) > distance_fov)
+	const bool in_distance = player_field_pos.distance(target->position) <= distance_fov;
+	if (!in_distance)
 	{
-		// ~disable when we go out of fov~
-		// just keep it despite going out of fov
-		// if ()
+		if (locking)
+			locking = false;
 
 		return;
 	}
 
 	// check if player direction
+	const bool in_direction = player_field_pos.normalize_towards(target->position).vec2vec_angle(direction) <= directional_fov;
+	if (!in_direction)
+	{
+		if (locking)
+			locking = false;
+
+		return;
+	}
 
 	// predict if player will reach hitobject in the given time based off the current average velocity
+	
 
+	// lock to target point
+	target_point = target->position;
+	locking = true;
 }
 
 auto features::aim_assist::move_aim_assist() -> void
