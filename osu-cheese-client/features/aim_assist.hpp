@@ -39,6 +39,8 @@ namespace features
 		inline static float distance_fov = 30.f; 
 		inline static float directional_fov = 80.f;
 
+		inline static float time_offset_ratio = 0.8f;
+
 		// Visuals settings
 
 		// Directional curve settings

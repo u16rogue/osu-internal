@@ -25,6 +25,7 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::SliderFloat("opx Distance", &distance_fov, 0.f, 300.f);
 	ImGui::SliderFloat("directional_fov", &directional_fov, 0.f, 180.f);
 	ImGui::SliderFloat("t_val", &t_val, 0.f, 1.f);
+	ImGui::SliderFloat("time_offset_ratio", &time_offset_ratio, 0.f, 1.f);
 
 	ImGui::Combo("Pathing mode", reinterpret_cast<int *>(&path_mode), "Linear\0Curve thing (bezier)\0");
 
@@ -177,7 +178,8 @@ auto features::aim_assist::check_aim_assist() -> void
 		{
 			if (should)
 			{
-				tmode = TARGETTING::GOING_HOME;
+				if (tmode != TARGETTING::HOME)
+					tmode = TARGETTING::GOING_HOME;
 				last_lock = nullptr;
 			}
 		}
@@ -187,9 +189,11 @@ auto features::aim_assist::check_aim_assist() -> void
 
 	sdk::hitobject * target {};
 
+	int i { -1 };
 	// find target
 	for (const auto & ho : game::pp_phitobject)
 	{
+		++i;
 		if (ho->is_hit)
 			continue;
 		// should check if its the upcoming
@@ -197,10 +201,12 @@ auto features::aim_assist::check_aim_assist() -> void
 		break;
 	}
 
-	if (!target)
+	int prev_end_time = i ? game::pp_phitobject[i - 1]->time.end : 0;
+
+	if (!target || game::p_game_info->beat_time < (target->time.start - prev_end_time) * time_offset_ratio + prev_end_time)
 		return;
 
-	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
+	auto player_field_pos = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
 
 	if (do_prediction)
 	{
@@ -266,20 +272,25 @@ auto features::aim_assist::move_aim_assist() -> void
 	}
 	else
 	{
-		if (use_set && set_point != game::pp_viewpos_info->pos.view_to_field())
+		switch (tmode)
 		{
-			if (tmode == TARGETTING::GOING_HOME)
+			case TARGETTING::HOME:
+			case TARGETTING::GOING_HOME:
 			{
-				aa_home_point = set_point;
-				aa_home_start = cur_time;
-			}
+				if (use_set)
+				{
+					if (tmode == TARGETTING::GOING_HOME)
+					{
+						aa_home_point = set_point;
+						aa_home_start = cur_time;
+						tmode = TARGETTING::HOME;
+					}
 
-			tmode = TARGETTING::HOME;
-			set_point = extrap_to_point(aa_home_point, game::pp_viewpos_info->pos.view_to_field(), t_val, (float)(cur_time - aa_home_start) / 1000.f);
-		}
-		else
-		{
-			use_set = false;
+					float ass = (float)(cur_time - aa_home_start) / 1000.f;
+					set_point = extrap_to_point(aa_home_point, game::pp_viewpos_info->pos.view_to_field(), t_val, ass);
+					use_set = ass <= 1.f && !(set_point == game::pp_viewpos_info->pos.view_to_field());
+				}
+			}
 		}
 	}
 }

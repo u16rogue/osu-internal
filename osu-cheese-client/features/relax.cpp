@@ -25,8 +25,6 @@ auto features::relax::on_tab_render() -> void
 
 auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool
 {
-	
-
 	return false;
 }
 
@@ -37,12 +35,18 @@ auto features::relax::on_render() -> void
 	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
-	auto [ho, i] = game::pp_phitobject.get_coming_hitobject(game::p_game_info->beat_time);
-	if (!ho)
-		return;
+	sdk::hitobject * ho {};
 
-	if (offset >= 0)
-		--ho;
+	for (const auto & pho : game::pp_phitobject)
+	{
+		if (pho->is_hit)
+			continue;
+
+		ho = pho;
+		break;
+	}
+
+	ImGui::GetBackgroundDrawList()->AddCircle(ho->position.field_to_view(), 4.f, 0xFFFFFFFF);
 
 	if (ho->time.start + offset <= game::p_game_info->beat_time || ho == filter_ho)
 		return;
@@ -58,6 +62,7 @@ auto features::relax::on_render() -> void
 	inp[1].ki.wVk = game::pp_pplayer_keys->ppk->osu.left_click.vkey;
 
 	SendInput(2, inp, sizeof(INPUT));
+	DEBUG_PRINTF("\n[D] sent relax hit!");
 }
 
 auto features::relax::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
