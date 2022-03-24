@@ -26,6 +26,8 @@ auto features::aim_assist::on_tab_render() -> void
 	ImGui::SliderFloat("directional_fov", &directional_fov, 0.f, 180.f);
 	ImGui::SliderFloat("t_val", &t_val, 0.f, 1.f);
 
+	ImGui::Combo("Pathing mode", reinterpret_cast<int *>(&path_mode), "Linear\0Curve thing (bezier)\0");
+
 	ImGui::NewLine();
 
 	ImGui::Text("[DEBUG] Use for directional sampling:");
@@ -111,7 +113,7 @@ auto features::aim_assist::on_render() -> void
 	if (enable)
 	{
 		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
-		draw->AddCircleFilled(aa_end_point.field_to_view(), 4.f, 0xFF00FFFF);
+		//draw->AddCircleFilled(aa_end_point.field_to_view(), 4.f, 0xFF00FFFF);
 		draw->AddCircle(curpos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
 
 		const auto dir_vis_len = 60.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
@@ -133,7 +135,7 @@ auto features::aim_assist::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
 	collect_sampling(*raw_coords);
 
 	if (enable && !silent && use_set)
-		*raw_coords = set_point;
+		*raw_coords = set_point.field_to_view();
 
 	return;
 }
@@ -169,6 +171,20 @@ auto features::aim_assist::check_aim_assist() -> void
 	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
 		return;
 
+	struct _reset_values
+	{
+		~_reset_values()
+		{
+			if (should)
+			{
+				locking = false;
+				last_lock = nullptr;
+			}
+		}
+
+		bool should { true };
+	} reset_values;
+
 	sdk::hitobject * target {};
 
 	// find target
@@ -203,50 +219,57 @@ auto features::aim_assist::check_aim_assist() -> void
 		// const auto time_to_target = dst_to_target * ms_per_opx;
 
 		if (!in_time)
-		{
-			if (locking)
-				locking = false;
-
 			return;
-		}
 	}
 
 	auto dst_to_target = player_field_pos.distance(target->position);
 	const bool in_distance = dst_to_target <= distance_fov;
 	if (!in_distance)
-	{
-		if (locking)
-			locking = false;
-
 		return;
-	}
 
 	// check if player direction
 	const bool in_direction = player_field_pos.normalize_towards(target->position).vec2vec_angle(direction) <= directional_fov;
 	if (!in_direction)
-	{
-		if (locking)
-			locking = false;
-
 		return;
-	}
+
+	reset_values.should = false;
+
+	if (target == last_lock)
+		return;
 
 	// lock to target point
 	aa_start_point = player_field_pos;
 	aa_end_point   = target->position;
-	time_to_point  = target->time.start;
+	aa_start_time  = game::p_game_info->beat_time;
+	aa_end_time    = target->time.start;
+	last_lock      = target;
 	locking = true;
+}
+
+auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2
+{
+	// a lot of this values SHOULD be cached, we don't need to recalculate this shit every frame
+	const auto distance = start.distance(end);
+	//const auto t_point = distance * t;
+	//const auto r_point = t_point * rate;
+	const auto cur = distance * rate;
+
+	return start.forward_towards(end, cur);
 }
 
 auto features::aim_assist::move_aim_assist() -> void
 {
-	if (locking)
+	const auto & cur_time = game::p_game_info->beat_time;
+	if (locking && cur_time <= aa_end_time)
 	{
-
+		use_set = true;
+		const auto norm_time = cur_time - aa_start_time;
+		const auto end_time = aa_end_time - aa_start_time;
+		set_point = extrap_to_point(aa_start_point, aa_end_point, t_val, (float)norm_time / (float)end_time);
 	}
 	else
 	{
-
+		use_set = false;
 	}
 }
 

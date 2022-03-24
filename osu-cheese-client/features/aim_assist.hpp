@@ -11,7 +11,7 @@ namespace features
 	class aim_assist
 	{
 
-		enum class PATHING
+		enum class PATHING : int
 		{
 			LINEAR,
 			CURVED
@@ -27,7 +27,7 @@ namespace features
 		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
 		inline static bool do_prediction = false;
-
+		inline static PATHING path_mode = PATHING::LINEAR;
 		inline static float t_val = .5f;
 
 		inline static bool ds_use_count = false;
@@ -44,12 +44,14 @@ namespace features
 		// Directional curve settings
 
 		// Internal calculations and tracking
-		inline static bool locking = false;
-		inline static bool use_set = false;
+		inline static bool      locking = false;
+		inline static bool      use_set = false;
+		inline static void *    last_lock = nullptr;
 		inline static sdk::vec2 set_point {};
 		inline static sdk::vec2 aa_end_point {};
 		inline static sdk::vec2 aa_start_point {};
-		inline static int time_to_point {};
+		inline static int       aa_start_time {};
+		inline static int       aa_end_time {};
 
 		inline static float velocity {};
 		inline static sdk::vec2 direction {};
@@ -64,6 +66,7 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
+		static auto extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2;
 		static auto predict_time_to_point(const sdk::vec2 start, const sdk::vec2 end) -> float;
 		static auto check_aim_assist() -> void;
 		static auto move_aim_assist() -> void;
