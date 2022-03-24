@@ -248,11 +248,8 @@ auto features::aim_assist::check_aim_assist() -> void
 
 auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2
 {
-	// a lot of this values SHOULD be cached, we don't need to recalculate this shit every frame
 	const auto distance = start.distance(end);
-	//const auto t_point = distance * t;
-	//const auto r_point = t_point * rate;
-	const auto cur = distance * rate;
+	const auto cur = distance * std::sinf((rate * std::numbers::pi_v<float>) / 2);
 
 	return start.forward_towards(end, cur);
 }

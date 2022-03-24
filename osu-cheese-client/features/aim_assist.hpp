@@ -37,7 +37,7 @@ namespace features
 		inline static bool silent = true;
 		inline static int max_reach_time_offset = 500;
 		inline static float distance_fov = 30.f; 
-		inline static float directional_fov = 50.f;
+		inline static float directional_fov = 80.f;
 
 		// Visuals settings
 
