@@ -43,8 +43,16 @@ namespace features
 
 		// Directional curve settings
 
+		enum class TARGETTING
+		{
+			NONE,
+			GOING_TO,
+			TO,
+			GOING_HOME,
+			HOME
+		};
+
 		// Internal calculations and tracking
-		inline static bool      locking = false;
 		inline static bool      use_set = false;
 		inline static void *    last_lock = nullptr;
 		inline static sdk::vec2 set_point {};
@@ -52,6 +60,10 @@ namespace features
 		inline static sdk::vec2 aa_start_point {};
 		inline static int       aa_start_time {};
 		inline static int       aa_end_time {};
+
+		inline static sdk::vec2 aa_home_point {}; // start point to home
+		inline static int aa_home_start {};
+		inline static TARGETTING tmode = TARGETTING::TO;
 
 		inline static float velocity {};
 		inline static sdk::vec2 direction {};

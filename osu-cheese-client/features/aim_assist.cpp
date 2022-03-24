@@ -97,7 +97,7 @@ auto features::aim_assist::on_render() -> void
 	const sdk::vec2 & curpnt = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
 	const auto & curpos = game::pp_viewpos_info->pos;
 
-	stext(ImVec2(20.f, 88.f), "AIM ASSIST LOCK", locking ? 0xFF00FF00 : 0xFF0000FF);
+	stext(ImVec2(20.f, 88.f), "AIM ASSIST LOCK", tmode == TARGETTING::TO ? 0xFF00FF00 : 0xFF0000FF);
 
 	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
 
@@ -177,7 +177,7 @@ auto features::aim_assist::check_aim_assist() -> void
 		{
 			if (should)
 			{
-				locking = false;
+				tmode = TARGETTING::GOING_HOME;
 				last_lock = nullptr;
 			}
 		}
@@ -192,7 +192,7 @@ auto features::aim_assist::check_aim_assist() -> void
 	{
 		if (ho->is_hit)
 			continue;
-
+		// should check if its the upcoming
 		target = ho;
 		break;
 	}
@@ -243,7 +243,7 @@ auto features::aim_assist::check_aim_assist() -> void
 	aa_start_time  = game::p_game_info->beat_time;
 	aa_end_time    = target->time.start;
 	last_lock      = target;
-	locking = true;
+	tmode = TARGETTING::TO;
 }
 
 auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2
@@ -257,7 +257,7 @@ auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::v
 auto features::aim_assist::move_aim_assist() -> void
 {
 	const auto & cur_time = game::p_game_info->beat_time;
-	if (locking && cur_time <= aa_end_time)
+	if (tmode == TARGETTING::TO && cur_time <= aa_end_time)
 	{
 		use_set = true;
 		const auto norm_time = cur_time - aa_start_time;
@@ -266,7 +266,21 @@ auto features::aim_assist::move_aim_assist() -> void
 	}
 	else
 	{
-		use_set = false;
+		if (use_set && set_point != game::pp_viewpos_info->pos.view_to_field())
+		{
+			if (tmode == TARGETTING::GOING_HOME)
+			{
+				aa_home_point = set_point;
+				aa_home_start = cur_time;
+			}
+
+			tmode = TARGETTING::HOME;
+			set_point = extrap_to_point(aa_home_point, game::pp_viewpos_info->pos.view_to_field(), t_val, (float)(cur_time - aa_home_start) / 1000.f);
+		}
+		else
+		{
+			use_set = false;
+		}
 	}
 }
 

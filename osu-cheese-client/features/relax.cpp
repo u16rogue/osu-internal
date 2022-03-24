@@ -25,20 +25,27 @@ auto features::relax::on_tab_render() -> void
 
 auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, void * reserved) -> bool
 {
+	
+
+	return false;
+}
+
+auto features::relax::on_render() -> void
+{
 	static const void * filter_ho = nullptr;
 
-	if (Msg != WM_MOUSEMOVE || !enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
-		return false;
+	if (!enable || !game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode || !game::p_game_info->is_playing)
+		return;
 
 	auto [ho, i] = game::pp_phitobject.get_coming_hitobject(game::p_game_info->beat_time);
 	if (!ho)
-		return false;
+		return;
 
 	if (offset >= 0)
 		--ho;
 
 	if (ho->time.start + offset <= game::p_game_info->beat_time || ho == filter_ho)
-		return false;
+		return;
 
 	filter_ho = ho;
 
@@ -51,12 +58,6 @@ auto features::relax::on_wndproc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 	inp[1].ki.wVk = game::pp_pplayer_keys->ppk->osu.left_click.vkey;
 
 	SendInput(2, inp, sizeof(INPUT));
-
-	return false;
-}
-
-auto features::relax::on_render() -> void
-{
 }
 
 auto features::relax::on_osu_set_raw_coords(sdk::vec2 * raw_coords) -> void
