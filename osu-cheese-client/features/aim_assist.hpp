@@ -11,6 +11,12 @@ namespace features
 	class aim_assist
 	{
 
+		enum class PATHING
+		{
+			LINEAR,
+			CURVED
+		};
+
 		struct point_record
 		{
 			sdk::vec2 point {};
@@ -20,9 +26,16 @@ namespace features
 		// Generic settings
 		inline static bool enable = false;
 		inline static int max_tick_sample = 200;
+		inline static bool do_prediction = false;
+
+		inline static float t_val = .5f;
+
+		inline static bool ds_use_count = false;
 		inline static int count_direction_sampling = 4;
+		inline static float dst_direction_sampling = 12.f;
+
 		inline static bool silent = true;
-		inline static int max_reach_time_offset = 250;
+		inline static int max_reach_time_offset = 500;
 		inline static float distance_fov = 30.f; 
 		inline static float directional_fov = 50.f;
 
@@ -34,7 +47,9 @@ namespace features
 		inline static bool locking = false;
 		inline static bool use_set = false;
 		inline static sdk::vec2 set_point {};
-		inline static sdk::vec2 target_point {};
+		inline static sdk::vec2 aa_end_point {};
+		inline static sdk::vec2 aa_start_point {};
+		inline static int time_to_point {};
 
 		inline static float velocity {};
 		inline static sdk::vec2 direction {};
@@ -49,6 +64,7 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
+		static auto predict_time_to_point(const sdk::vec2 start, const sdk::vec2 end) -> float;
 		static auto check_aim_assist() -> void;
 		static auto move_aim_assist() -> void;
 		static auto collect_sampling (const sdk::vec2 & cpoint) -> void;

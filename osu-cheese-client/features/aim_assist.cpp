@@ -19,11 +19,22 @@ auto features::aim_assist::on_tab_render() -> void
 
 	ImGui::Checkbox("Enabled", &enable);
 	ImGui::Checkbox("Silent", &silent);
+	ImGui::Checkbox("do_prediction", &do_prediction);
 	ImGui::InputInt("[DEBUG] max_tick_sample", &max_tick_sample);
 	ImGui::InputInt("[DEBUG] max_reach_time_offset (late and over)", &max_reach_time_offset);
 	ImGui::SliderFloat("opx Distance", &distance_fov, 0.f, 300.f);
 	ImGui::SliderFloat("directional_fov", &directional_fov, 0.f, 180.f);
+	ImGui::SliderFloat("t_val", &t_val, 0.f, 1.f);
+
+	ImGui::NewLine();
+
+	ImGui::Text("[DEBUG] Use for directional sampling:");
+	ImGui::SameLine();
+	if (ImGui::Button(ds_use_count ? "count_direction_sampling" : "dst_direction_sampling"))
+		ds_use_count = !ds_use_count;
+
 	ImGui::InputInt("[DEBUG] count_direction_sampling", &count_direction_sampling);
+	ImGui::InputFloat("[DEBUG] dst_direction_sampling", &dst_direction_sampling);
 
 	ImGui::EndTabItem();
 }
@@ -94,11 +105,13 @@ auto features::aim_assist::on_render() -> void
 	const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
 	stext(ImVec2(20.f, 124.f), ("p cl2sv d%: " + std::to_string(opx_dist / max_p2p_distance * 100.f) + "%").c_str());
 
+	stext(ImVec2(20.f, 136.f), ("dst per 1 tick: " + std::to_string((1.f / static_cast<float>(max_tick_sample)) * velocity)).c_str());
+
 	// Draw player position
 	if (enable)
 	{
 		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
-		draw->AddCircleFilled(target_point.field_to_view(), 4.f, 0xFF00FFFF);
+		draw->AddCircleFilled(aa_end_point.field_to_view(), 4.f, 0xFF00FFFF);
 		draw->AddCircle(curpos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
 
 		const auto dir_vis_len = 60.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
@@ -133,6 +146,14 @@ auto features::aim_assist::osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) 
 	return;
 }
 
+auto features::aim_assist::predict_time_to_point(const sdk::vec2 start, const sdk::vec2 end) -> float
+{
+	const auto ms_per_opx = (1.f / velocity) * max_tick_sample;
+	const auto time_to_target = start.distance(end) * ms_per_opx;
+
+	return time_to_target;
+}
+
 auto features::aim_assist::check_aim_assist() -> void
 {
 	static bool last_enable_state = false;
@@ -165,7 +186,33 @@ auto features::aim_assist::check_aim_assist() -> void
 
 	auto player_field_pos = game::pp_viewpos_info->pos.view_to_field();
 
-	const bool in_distance = player_field_pos.distance(target->position) <= distance_fov;
+	if (do_prediction)
+	{
+		// doing an early prediction cause i wanna see if it actually works
+		auto _pred = predict_time_to_point(player_field_pos, target->position);
+		const auto predicted_time = game::p_game_info->beat_time + _pred;
+		const auto prelim = target->time.start - max_reach_time_offset;
+		const auto postlim = target->time.start + max_reach_time_offset;
+		const bool in_time = predicted_time >= prelim && predicted_time <= postlim;
+
+		const bool in_time_no_lower = predicted_time <= postlim;
+		ImGui::GetBackgroundDrawList()->AddText(target->position.field_to_view(), in_time_no_lower ? 0xFF00FF00 : 0xFF0000FF, ("prediction: " + std::to_string(_pred) + "ms").c_str());
+
+		// predict if player will reach hitobject in the given time based off the current average velocity
+		// const auto ms_per_opx = (1.f / velocity) * max_tick_sample;
+		// const auto time_to_target = dst_to_target * ms_per_opx;
+
+		if (!in_time)
+		{
+			if (locking)
+				locking = false;
+
+			return;
+		}
+	}
+
+	auto dst_to_target = player_field_pos.distance(target->position);
+	const bool in_distance = dst_to_target <= distance_fov;
 	if (!in_distance)
 	{
 		if (locking)
@@ -184,17 +231,23 @@ auto features::aim_assist::check_aim_assist() -> void
 		return;
 	}
 
-	// predict if player will reach hitobject in the given time based off the current average velocity
-	
-
 	// lock to target point
-	target_point = target->position;
+	aa_start_point = player_field_pos;
+	aa_end_point   = target->position;
+	time_to_point  = target->time.start;
 	locking = true;
 }
 
 auto features::aim_assist::move_aim_assist() -> void
 {
+	if (locking)
+	{
 
+	}
+	else
+	{
+
+	}
 }
 
 auto features::aim_assist::collect_sampling(const sdk::vec2 & cpoint) -> void
@@ -224,16 +277,16 @@ auto features::aim_assist::run_sampling() -> void
 	if (point_records)
 	{
 		int count_vel {};
-		//int count_dir {};
 		float total_vel {};
-		float total_dir {};
 		point_record * last = nullptr;
 
-		//sdk::vec2 last_direction {};
+		bool dir_set = false;
 
-		// i think this should iterate in reverse
-		for (auto & prt : *point_records)
+		const auto npnt = point_records->size();
+		for (int i = npnt - 1; i != -1; --i)
 		{
+			auto & prt = (*point_records)[i];
+
 			if (prt.tick < GetTickCount() - max_tick_sample)
 				continue;
 
@@ -249,6 +302,7 @@ auto features::aim_assist::run_sampling() -> void
 			// velocity
 			total_vel += last_in_field.distance(now_in_field);
 
+			// TODO: do better sampling shit here
 			#if 0
 			// direction
 			if (count_dir < count_direction_sampling)
@@ -266,15 +320,26 @@ auto features::aim_assist::run_sampling() -> void
 			}
 			#endif
 
+			if (!ds_use_count)
+			{
+				if (const auto & latest = point_records->back(); !dir_set && latest.point.distance(prt.point) >= dst_direction_sampling)
+				{
+					direction = prt.point.normalize_towards(latest.point);
+					dir_set = true;
+				}
+			}
+
 			++count_vel;
 			last = &prt;
 		}
 
 		// direction = sdk::vec2::from_deg(total_dir / count_direction_sampling);
-
-		if (const auto pr_cnt = point_records->size(); pr_cnt > count_direction_sampling)
+		if (ds_use_count)
 		{
-			direction = (*point_records)[pr_cnt - count_direction_sampling].point.normalize_towards(point_records->back().point);
+			if (const auto pr_cnt = point_records->size(); pr_cnt > count_direction_sampling)
+			{
+				direction = (*point_records)[pr_cnt - count_direction_sampling].point.normalize_towards(point_records->back().point);
+			}
 		}
 
 		velocity  = total_vel ? total_vel / count_vel : 0.f;
