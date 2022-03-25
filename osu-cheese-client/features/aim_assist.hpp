@@ -63,6 +63,9 @@ namespace features
 		inline static int       aa_start_time {};
 		inline static int       aa_end_time {};
 
+		inline static bool last_target_is_slider = false;
+		inline static int aa_home_next_time {};
+		inline static int aa_expect_time {};
 		inline static sdk::vec2 aa_home_point {}; // start point to home
 		inline static int aa_home_start {};
 		inline static TARGETTING tmode = TARGETTING::TO;

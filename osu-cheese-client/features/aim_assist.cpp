@@ -201,9 +201,20 @@ auto features::aim_assist::check_aim_assist() -> void
 		break;
 	}
 
+	if (!target)
+		return;
+
 	int prev_end_time = i ? game::pp_phitobject[i - 1]->time.end : 0;
 
-	if (!target || game::p_game_info->beat_time < (target->time.start - prev_end_time) * time_offset_ratio + prev_end_time)
+	const auto assist_time_trigger = (target->time.start - prev_end_time) * time_offset_ratio + prev_end_time;
+	//aa_home_next_time = assist_time_trigger;
+	if (game::p_game_info->beat_time < assist_time_trigger)
+		return;
+
+	if (target->type == sdk::hit_type::Spinner)
+		return;
+
+	if (target->type == sdk::hit_type::Slider && game::p_game_info->beat_time > target->time.start)
 		return;
 
 	auto player_field_pos = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
@@ -240,7 +251,7 @@ auto features::aim_assist::check_aim_assist() -> void
 
 	reset_values.should = false;
 
-	if (target == last_lock)
+	if (target == last_lock && tmode != TARGETTING::HOME)
 		return;
 
 	// lock to target point
@@ -249,6 +260,7 @@ auto features::aim_assist::check_aim_assist() -> void
 	aa_start_time  = game::p_game_info->beat_time;
 	aa_end_time    = target->time.start;
 	last_lock      = target;
+	last_target_is_slider = target->type == sdk::hit_type::Slider;
 	tmode = TARGETTING::TO;
 }
 
@@ -262,6 +274,13 @@ auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::v
 
 auto features::aim_assist::move_aim_assist() -> void
 {
+	if (!game::pp_phitobject || !game::pp_info_player->async_complete || game::pp_info_player->is_replay_mode)
+	{
+		use_set = false;
+		tmode = TARGETTING::NONE;
+		return;
+	}
+
 	const auto & cur_time = game::p_game_info->beat_time;
 	if (tmode == TARGETTING::TO && cur_time <= aa_end_time)
 	{
@@ -283,10 +302,35 @@ auto features::aim_assist::move_aim_assist() -> void
 					{
 						aa_home_point = set_point;
 						aa_home_start = cur_time;
+						aa_expect_time = 500;
+						
+						// grab the next ho
+						sdk::hitobject * pho {};
+						int i { -1 };
+						for (const auto & ho : game::pp_phitobject)
+						{
+							++i;
+							if (ho->is_hit)
+								continue;
+						
+							if (cur_time < ho->time.start)
+								pho = ho;
+						
+							break;
+						}
+
+						if (pho)
+						{
+							int prev_end_time = i ? game::pp_phitobject[i - 1]->time.end : 0;
+							const auto exp_time = ((pho->time.start - prev_end_time) * time_offset_ratio + prev_end_time) - cur_time;
+							if (exp_time < 500)
+								aa_expect_time = exp_time;
+						}
+
 						tmode = TARGETTING::HOME;
 					}
 
-					float ass = (float)(cur_time - aa_home_start) / 1000.f;
+					float ass = (float)(cur_time - aa_home_start) / (float)aa_expect_time;
 					set_point = extrap_to_point(aa_home_point, game::pp_viewpos_info->pos.view_to_field(), t_val, ass);
 					use_set = ass <= 1.f && !(set_point == game::pp_viewpos_info->pos.view_to_field());
 				}
