@@ -15,5 +15,5 @@ auto WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res0) -> BOOL
 		
 	}, inst, NULL, nullptr));
 
-	return 0;
+	return TRUE;
 }
