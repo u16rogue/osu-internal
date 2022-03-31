@@ -11,6 +11,8 @@ namespace features
 	class aim_assist
 	{
 
+		inline static bool debug_shit = true;
+
 		enum class PATHING : int
 		{
 			LINEAR,
@@ -83,6 +85,7 @@ namespace features
 		static auto osu_set_field_coords_rebuilt(sdk::vec2 * out_coords) -> void;
 
 	private:
+		static auto etp_bezier(const sdk::vec2 & start, const sdk::vec2 & cp, const sdk::vec2 & end, const float & rate) -> sdk::vec2;
 		static auto extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2;
 		static auto predict_time_to_point(const sdk::vec2 start, const sdk::vec2 end) -> float;
 		static auto check_aim_assist() -> void;

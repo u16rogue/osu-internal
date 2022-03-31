@@ -1,0 +1,8 @@
+* recode this when a proper aim assist is implemented
+	* implement in place decryption
+	* resolve functions at runtime by name
+	* write a proper lib
+	* better modularizization
+
+* use velocity for movement rather than just lerping between points
+* fix prediction system

@@ -17,6 +17,7 @@ auto features::aim_assist::on_tab_render() -> void
 	if (!ImGui::BeginTabItem("Aim assist"))
 		return;
 
+	ImGui::Checkbox("debug stuff", &debug_shit);
 	ImGui::Checkbox("Enabled", &enable);
 	ImGui::Checkbox("Silent", &silent);
 	ImGui::Checkbox("do_prediction", &do_prediction);
@@ -65,7 +66,7 @@ auto features::aim_assist::on_render() -> void
 	check_aim_assist();
 
 	// HACK: DEBUG ! REMOVE !
-	if (point_records)
+	if (debug_shit && point_records)
 	{
 		point_record * last = nullptr;
 		for (auto & prt : *point_records)
@@ -98,36 +99,44 @@ auto features::aim_assist::on_render() -> void
 	const sdk::vec2 & curpnt = use_set ? set_point : game::pp_viewpos_info->pos.view_to_field();
 	const auto & curpos = game::pp_viewpos_info->pos;
 
-	stext(ImVec2(20.f, 88.f), "AIM ASSIST LOCK", tmode == TARGETTING::TO ? 0xFF00FF00 : 0xFF0000FF);
-
-	stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
-
-	auto opx_dist = curpos.view_to_field().distance(curpnt);
-	stext(ImVec2(20.f, 112.f), ("p cl2sv dd: " + std::to_string(opx_dist) + " opx").c_str());
-
-	const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
-	stext(ImVec2(20.f, 124.f), ("p cl2sv d%: " + std::to_string(opx_dist / max_p2p_distance * 100.f) + "%").c_str());
-
-	stext(ImVec2(20.f, 136.f), ("dst per 1 tick: " + std::to_string((1.f / static_cast<float>(max_tick_sample)) * velocity)).c_str());
-
-	// Draw player position
 	if (enable)
 	{
 		draw->AddCircleFilled(curpnt.field_to_view(), 4.f, 0xFF00FF00);
-		//draw->AddCircleFilled(aa_end_point.field_to_view(), 4.f, 0xFF00FFFF);
 		draw->AddCircle(curpos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
+	}
 
-		const auto dir_vis_len = 60.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
-		draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(direction, dir_vis_len), 0xFFFFFFFF, 3.f); // visualize player direction
+	if (debug_shit)
+	{
+		stext(ImVec2(20.f, 88.f), "AIM ASSIST LOCK", tmode == TARGETTING::TO ? 0xFF00FF00 : 0xFF0000FF);
 
-		// visualize directional fov
-		const auto dir_ang = direction.from_norm_to_deg();
-		
-		const auto a1 = curpos.forward(sdk::vec2::from_deg(dir_ang - directional_fov), dir_vis_len);
-		draw->AddLine(curpos, a1, 0xFFFFFFFF, 3.f);
+		stext(ImVec2(20.f, 100.f), ("Avg. Velocity: " + std::to_string(velocity)).c_str());
 
-		const auto a2 = curpos.forward(sdk::vec2::from_deg(dir_ang + directional_fov), dir_vis_len);
-		draw->AddLine(curpos, a2, 0xFFFFFFFF, 3.f);
+		auto opx_dist = curpos.view_to_field().distance(curpnt);
+		stext(ImVec2(20.f, 112.f), ("p cl2sv dd: " + std::to_string(opx_dist) + " opx").c_str());
+
+		const auto max_p2p_distance = sdk::vec2(0.f, 0.f).distance(sdk::vec2(512.f, 384.f)); // srfgwsvergvserg
+		stext(ImVec2(20.f, 124.f), ("p cl2sv d%: " + std::to_string(opx_dist / max_p2p_distance * 100.f) + "%").c_str());
+
+		stext(ImVec2(20.f, 136.f), ("dst per 1 tick: " + std::to_string((1.f / static_cast<float>(max_tick_sample)) * velocity)).c_str());
+
+		// Draw player position
+		if (enable)
+		{
+			//draw->AddCircleFilled(aa_end_point.field_to_view(), 4.f, 0xFF00FFFF);
+			draw->AddCircle(curpos, distance_fov * manager::game_field::field_ratio, 0xFFFFFFFF); // opx distance visualization
+
+			const auto dir_vis_len = 60.f; //std::clamp(max_p2p_distance * (velocity / max_p2p_distance), 0.f, max_p2p_distance);
+			draw->AddLine(game::pp_viewpos_info->pos, game::pp_viewpos_info->pos.forward(direction, dir_vis_len), 0xFFFFFFFF, 3.f); // visualize player direction
+
+																																	// visualize directional fov
+			const auto dir_ang = direction.from_norm_to_deg();
+
+			const auto a1 = curpos.forward(sdk::vec2::from_deg(dir_ang - directional_fov), dir_vis_len);
+			draw->AddLine(curpos, a1, 0xFFFFFFFF, 3.f);
+
+			const auto a2 = curpos.forward(sdk::vec2::from_deg(dir_ang + directional_fov), dir_vis_len);
+			draw->AddLine(curpos, a2, 0xFFFFFFFF, 3.f);
+		}
 	}
 }
 
@@ -178,7 +187,7 @@ auto features::aim_assist::check_aim_assist() -> void
 		{
 			if (should)
 			{
-				if (tmode != TARGETTING::HOME)
+				if (tmode != TARGETTING::HOME && tmode != TARGETTING::GOING_HOME)
 					tmode = TARGETTING::GOING_HOME;
 				last_lock = nullptr;
 			}
@@ -229,7 +238,9 @@ auto features::aim_assist::check_aim_assist() -> void
 		const bool in_time = predicted_time >= prelim && predicted_time <= postlim;
 
 		const bool in_time_no_lower = predicted_time <= postlim;
-		ImGui::GetBackgroundDrawList()->AddText(target->position.field_to_view(), in_time_no_lower ? 0xFF00FF00 : 0xFF0000FF, ("prediction: " + std::to_string(_pred) + "ms").c_str());
+
+		if (debug_shit)
+			ImGui::GetBackgroundDrawList()->AddText(target->position.field_to_view(), in_time_no_lower ? 0xFF00FF00 : 0xFF0000FF, ("prediction: " + std::to_string(_pred) + "ms").c_str());
 
 		// predict if player will reach hitobject in the given time based off the current average velocity
 		// const auto ms_per_opx = (1.f / velocity) * max_tick_sample;
@@ -239,7 +250,12 @@ auto features::aim_assist::check_aim_assist() -> void
 			return;
 	}
 
-	auto dst_to_target = player_field_pos.distance(target->position);
+	const auto dst_to_target = player_field_pos.distance(target->position);
+
+	const bool in_hitobject = dst_to_target <= game::pp_phitobject->hitobjectmanager->beatmap->circle_size();
+	if (in_hitobject)
+		return;
+
 	const bool in_distance = dst_to_target <= distance_fov;
 	if (!in_distance)
 		return;
@@ -262,6 +278,11 @@ auto features::aim_assist::check_aim_assist() -> void
 	last_lock      = target;
 	last_target_is_slider = target->type == sdk::hit_type::Slider;
 	tmode = TARGETTING::TO;
+}
+
+auto features::aim_assist::etp_bezier(const sdk::vec2 & start, const sdk::vec2 & cp, const sdk::vec2 & end, const float & rate) -> sdk::vec2
+{
+	return sdk::vec2();
 }
 
 auto features::aim_assist::extrap_to_point(const sdk::vec2 & start, const sdk::vec2 & end, const float & t, const float & rate) -> sdk::vec2
